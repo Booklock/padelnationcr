@@ -19,7 +19,7 @@ function AdminDashboard() {
               </p>
             </div>
 
-            <button className="btn btn-primary">Crear nuevo evento</button>
+            <Link className="btn btn-primary" to="/admin/crear-evento">Crear nuevo evento</Link>
           </div>
 
           <div className="admin-stats-grid">
@@ -92,7 +92,9 @@ function AdminDashboard() {
               <h2>Operación diaria</h2>
 
               <div className="quick-actions">
-                <button className="quick-action">Crear evento</button>
+                <Link className="quick-action" to="/admin/crear-evento">
+                Crear evento
+                </Link>
                 <button className="quick-action">Ingresar resultados</button>
                 <button className="quick-action">Gestionar jugadores</button>
                 <button className="quick-action">Actualizar ranking</button>

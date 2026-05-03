@@ -19,6 +19,7 @@ function Navbar() {
         <nav className="nav-links">
           <Link to="/eventos">Eventos</Link>
           <Link to="/ranking">Ranking</Link>
+          <Link to="/perfil">Mi perfil</Link>
           <a href="/#how-it-works">Cómo funciona</a>
 
           {isAdmin && <Link to="/admin">Admin</Link>}

@@ -184,7 +184,7 @@ function Home() {
           </div>
         </div>
       </section>
-
+      
       <section className="section admin-preview" id="admin">
         <div className="container admin-grid">
           <div>

@@ -1,0 +1,275 @@
+.create-event-page {
+  min-height: calc(100vh - 78px);
+}
+
+.create-event-hero {
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 28px;
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.create-event-hero::before {
+  content: "";
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  background: var(--color-lime);
+  border-radius: 999px;
+  filter: blur(96px);
+  opacity: 0.13;
+  right: -90px;
+  top: -90px;
+}
+
+.create-event-hero > * {
+  position: relative;
+}
+
+.create-event-format-card {
+  background: var(--color-white);
+  color: var(--color-carbon);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.create-event-format-card span,
+.create-event-format-card small {
+  color: var(--color-graphite);
+  font-weight: 800;
+}
+
+.create-event-format-card strong {
+  display: block;
+  color: var(--color-deep-navy);
+  font-size: 2.8rem;
+  line-height: 1;
+  margin: 10px 0;
+}
+
+.create-event-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 22px;
+  align-items: start;
+  padding-bottom: 48px;
+}
+
+.create-event-form {
+  padding: 26px;
+  display: grid;
+  gap: 30px;
+}
+
+.form-section {
+  display: grid;
+  gap: 20px;
+}
+
+.form-section h2 {
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.form-field-wide {
+  grid-column: 1 / -1;
+}
+
+.form-field span {
+  color: var(--color-text-muted);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(30, 30, 31, 0.78);
+  color: var(--color-white);
+  padding: 14px 15px;
+  outline: none;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: rgba(220, 251, 0, 0.68);
+  box-shadow: 0 0 0 3px rgba(220, 251, 0, 0.12);
+}
+
+.form-field input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.form-field select option {
+  background: var(--color-carbon);
+  color: var(--color-white);
+}
+
+.format-explanation {
+  background: rgba(220, 251, 0, 0.1);
+  border: 1px solid rgba(220, 251, 0, 0.24);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.format-explanation strong {
+  color: var(--color-lime);
+}
+
+.format-explanation p {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+.create-event-sidebar {
+  display: grid;
+  gap: 22px;
+}
+
+.event-preview-card,
+.event-calculation-card {
+  padding: 24px;
+}
+
+.event-preview-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-status {
+  color: var(--color-lime);
+  font-weight: 900;
+}
+
+.preview-category {
+  width: 112px;
+  height: 112px;
+  border-radius: 30px;
+  background: var(--color-white);
+  color: var(--color-carbon);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  margin: 24px 0;
+}
+
+.preview-category span {
+  color: var(--color-graphite);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.preview-category strong {
+  font-size: 3rem;
+  color: var(--color-deep-navy);
+  line-height: 0.8;
+}
+
+.event-preview-card h2 {
+  margin: 0 0 20px;
+}
+
+.preview-info {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.preview-info div,
+.calculation-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.preview-info span,
+.calculation-list span,
+.preview-levels span {
+  color: var(--color-text-muted);
+  font-weight: 800;
+}
+
+.preview-levels {
+  display: grid;
+  gap: 10px;
+}
+
+.preview-levels div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preview-levels strong {
+  background: rgba(220, 251, 0, 0.12);
+  border: 1px solid rgba(220, 251, 0, 0.24);
+  color: var(--color-lime);
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+}
+
+.event-calculation-card h2 {
+  margin-top: 0;
+}
+
+.calculation-list {
+  display: grid;
+}
+
+.calculation-list strong {
+  color: var(--color-lime);
+}
+
+@media (max-width: 1080px) {
+  .create-event-layout,
+  .create-event-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .create-event-format-card strong {
+    font-size: 2.2rem;
+  }
+}

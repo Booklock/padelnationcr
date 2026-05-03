@@ -1,7 +1,7 @@
 export const currentUser = {
   id: 1,
-  name: "Admin Padel Nation",
-  email: "admin@padelnationcr.com",
+  name: "Carlos Vargas",
+  email: "carlos@email.com",
   role: "admin",
 };
 
