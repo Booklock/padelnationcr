@@ -1,9 +1,25 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { mockEvents } from "../data/mockEvents";
 import "./AdminDashboard.css";
 
 function AdminDashboard() {
   const activeEvents = mockEvents.filter((event) => event.status !== "Cerrado");
+  const [currentEventIndex, setCurrentEventIndex] = useState(0);
+
+  const currentEvent = activeEvents[currentEventIndex];
+
+  function goToPreviousEvent() {
+    setCurrentEventIndex((currentIndex) =>
+      currentIndex === 0 ? activeEvents.length - 1 : currentIndex - 1
+    );
+  }
+
+  function goToNextEvent() {
+    setCurrentEventIndex((currentIndex) =>
+      currentIndex === activeEvents.length - 1 ? 0 : currentIndex + 1
+    );
+  }
 
   return (
     <main className="admin-page">
@@ -19,7 +35,9 @@ function AdminDashboard() {
               </p>
             </div>
 
-            <Link className="btn btn-primary" to="/admin/crear-evento">Crear nuevo evento</Link>
+            <Link className="btn btn-primary" to="/admin/crear-evento">
+              Crear nuevo evento
+            </Link>
           </div>
 
           <div className="admin-stats-grid">
@@ -60,31 +78,78 @@ function AdminDashboard() {
                 </Link>
               </div>
 
-              <div className="admin-event-list">
-                {activeEvents.map((event) => (
-                  <article className="admin-event-item" key={event.id}>
-                    <div>
-                      <span className="badge">{event.format}</span>
-                      <h3>{event.title}</h3>
-                      <p>
-                        {event.date} · {event.time} · {event.location}
-                      </p>
+              {currentEvent ? (
+                <div className="admin-event-carousel">
+                  <article className="carousel-event-card">
+                    <div className="carousel-event-top">
+                      <span className="badge">{currentEvent.format}</span>
+                      <span className="carousel-event-count">
+                        {currentEventIndex + 1} de {activeEvents.length}
+                      </span>
                     </div>
 
-                    <div className="admin-event-actions">
+                    <h3>{currentEvent.title}</h3>
+
+                    <div className="carousel-event-meta">
+                      <span>{currentEvent.date}</span>
+                      <span>{currentEvent.time}</span>
+                      <span>{currentEvent.location}</span>
+                    </div>
+
+                    <div className="carousel-event-bottom">
                       <span>
-                        {event.playersRegistered}/{event.playerLimit} cupos
+                        {currentEvent.playersRegistered}/{currentEvent.playerLimit}{" "}
+                        cupos · {currentEvent.courts} canchas
                       </span>
+
                       <Link
                         className="btn btn-primary"
-                        to={`/admin/evento/${event.id}`}
+                        to={`/admin/evento/${currentEvent.id}`}
                       >
                         Administrar
                       </Link>
                     </div>
                   </article>
-                ))}
-              </div>
+
+                  <div className="carousel-controls">
+                    <button
+                      className="carousel-nav-btn"
+                      onClick={goToPreviousEvent}
+                      type="button"
+                    >
+                      ←
+                    </button>
+
+                    <div className="carousel-dots">
+                      {activeEvents.map((event, index) => (
+                        <button
+                          key={event.id}
+                          className={
+                            index === currentEventIndex
+                              ? "carousel-dot active"
+                              : "carousel-dot"
+                          }
+                          onClick={() => setCurrentEventIndex(index)}
+                          type="button"
+                          aria-label={`Ir al evento ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      className="carousel-nav-btn"
+                      onClick={goToNextEvent}
+                      type="button"
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty-admin-state">
+                  <p>No hay eventos activos en este momento.</p>
+                </div>
+              )}
             </section>
 
             <aside className="card admin-panel">
@@ -93,7 +158,7 @@ function AdminDashboard() {
 
               <div className="quick-actions">
                 <Link className="quick-action" to="/admin/crear-evento">
-                Crear evento
+                  Crear evento
                 </Link>
                 <button className="quick-action">Ingresar resultados</button>
                 <button className="quick-action">Gestionar jugadores</button>

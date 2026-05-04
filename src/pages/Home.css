@@ -310,3 +310,130 @@
     grid-template-columns: 1fr;
   }
 }
+.section-actions {
+  display: grid;
+  justify-items: end;
+  gap: 16px;
+}
+
+.home-event-carousel {
+  padding: 26px;
+}
+
+.home-event-slide {
+  display: grid;
+  grid-template-columns: 1.2fr 0.45fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.home-event-main {
+  display: grid;
+  gap: 18px;
+}
+
+.home-event-main h3 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -0.04em;
+}
+
+.home-event-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.home-event-category {
+  background: var(--color-white);
+  color: var(--color-carbon);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.home-event-category span,
+.home-event-category small {
+  color: var(--color-graphite);
+  font-weight: 900;
+}
+
+.home-event-category strong {
+  color: var(--color-deep-navy);
+  font-size: clamp(4rem, 10vw, 7rem);
+  line-height: 0.9;
+}
+
+.home-carousel-controls {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.carousel-nav-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.carousel-nav-btn:hover {
+  color: var(--color-lime);
+  border-color: rgba(220, 251, 0, 0.4);
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.carousel-dot.active {
+  background: var(--color-lime);
+}
+
+@media (max-width: 900px) {
+  .section-actions {
+    justify-items: start;
+  }
+
+  .home-event-slide {
+    grid-template-columns: 1fr;
+  }
+
+  .home-event-category {
+    min-height: 180px;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-event-carousel {
+    padding: 18px;
+  }
+
+  .home-event-actions .btn {
+    width: 100%;
+  }
+
+  .home-carousel-controls {
+    justify-content: space-between;
+  }
+}

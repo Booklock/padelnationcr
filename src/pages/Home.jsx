@@ -1,7 +1,26 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { mockEvents, mockRanking } from "../data/mockEvents";
 import "./Home.css";
 
 function Home() {
+  const [currentEventIndex, setCurrentEventIndex] = useState(0);
+
+  const featuredEvents = mockEvents.slice(0, 5);
+  const currentEvent = featuredEvents[currentEventIndex];
+
+  function goToPreviousEvent() {
+    setCurrentEventIndex((currentIndex) =>
+      currentIndex === 0 ? featuredEvents.length - 1 : currentIndex - 1
+    );
+  }
+
+  function goToNextEvent() {
+    setCurrentEventIndex((currentIndex) =>
+      currentIndex === featuredEvents.length - 1 ? 0 : currentIndex + 1
+    );
+  }
+
   return (
     <main>
       <section className="hero">
@@ -17,12 +36,12 @@ function Home() {
             </p>
 
             <div className="hero-actions">
-              <a className="btn btn-primary" href="#events">
+              <Link className="btn btn-primary" to="/eventos">
                 Ver próximos eventos
-              </a>
-              <a className="btn btn-secondary" href="#ranking">
+              </Link>
+              <Link className="btn btn-secondary" to="/ranking">
                 Ver ranking
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -67,52 +86,110 @@ function Home() {
               <p className="section-kicker">Eventos</p>
               <h2 className="section-title">Próximos pozos y retos</h2>
             </div>
-            <p className="section-description">
-              Los eventos se organizan por categoría principal: AA, A, B, C y
-              D. Cada jugador mantiene un nivel específico dentro del ranking:
-              +, normal o -.
-            </p>
+
+            <div className="section-actions">
+              <p className="section-description">
+                Una vista rápida de los próximos eventos. La lista completa vive
+                en la sección de Eventos.
+              </p>
+
+              <Link className="btn btn-secondary" to="/eventos">
+                Ver todos
+              </Link>
+            </div>
           </div>
 
-          <div className="event-grid">
-            {mockEvents.map((event) => (
-              <article className="event-card card" key={event.id}>
-                <div className="event-card-top">
-                  <span className="badge">{event.format}</span>
-                  <span className="event-status">{event.status}</span>
+          {currentEvent && (
+            <div className="home-event-carousel card">
+              <article className="home-event-slide">
+                <div className="home-event-main">
+                  <div className="event-card-top">
+                    <span className="badge">{currentEvent.format}</span>
+                    <span className="event-status">{currentEvent.status}</span>
+                  </div>
+
+                  <h3>{currentEvent.title}</h3>
+
+                  <div className="event-meta">
+                    <span>{currentEvent.date}</span>
+                    <span>{currentEvent.time}</span>
+                    <span>{currentEvent.location}</span>
+                  </div>
+
+                  <div className="event-details">
+                    <div>
+                      <small>Cupos</small>
+                      <strong>
+                        {currentEvent.playersRegistered}/
+                        {currentEvent.playerLimit}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <small>Canchas</small>
+                      <strong>{currentEvent.courts}</strong>
+                    </div>
+
+                    <div>
+                      <small>Niveles</small>
+                      <strong>{currentEvent.allowedLevels.join(", ")}</strong>
+                    </div>
+                  </div>
+
+                  <div className="home-event-actions">
+                    <button className="btn btn-primary">Inscribirme</button>
+                    <Link className="btn btn-secondary" to="/eventos">
+                      Ver detalles
+                    </Link>
+                  </div>
                 </div>
 
-                <h3>{event.title}</h3>
-
-                <div className="event-meta">
-                  <span>{event.date}</span>
-                  <span>{event.time}</span>
-                  <span>{event.location}</span>
+                <div className="home-event-category">
+                  <span>Categoría</span>
+                  <strong>{currentEvent.category}</strong>
+                  <small>
+                    {currentEventIndex + 1} de {featuredEvents.length}
+                  </small>
                 </div>
-
-                <div className="event-details">
-                  <div>
-                    <small>Cupos</small>
-                    <strong>
-                      {event.playersRegistered}/{event.playerLimit}
-                    </strong>
-                  </div>
-                  <div>
-                    <small>Canchas</small>
-                    <strong>{event.courts}</strong>
-                  </div>
-                  <div>
-                    <small>Niveles</small>
-                    <strong>{event.allowedLevels.join(", ")}</strong>
-                  </div>
-                </div>
-
-                <button className="btn btn-primary event-button">
-                  Inscribirme
-                </button>
               </article>
-            ))}
-          </div>
+
+              <div className="home-carousel-controls">
+                <button
+                  className="carousel-nav-btn"
+                  onClick={goToPreviousEvent}
+                  type="button"
+                  aria-label="Evento anterior"
+                >
+                  ←
+                </button>
+
+                <div className="carousel-dots">
+                  {featuredEvents.map((event, index) => (
+                    <button
+                      key={event.id}
+                      className={
+                        index === currentEventIndex
+                          ? "carousel-dot active"
+                          : "carousel-dot"
+                      }
+                      onClick={() => setCurrentEventIndex(index)}
+                      type="button"
+                      aria-label={`Ir al evento ${index + 1}`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  className="carousel-nav-btn"
+                  onClick={goToNextEvent}
+                  type="button"
+                  aria-label="Siguiente evento"
+                >
+                  →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -156,7 +233,10 @@ function Home() {
               <p className="section-kicker">Ranking</p>
               <h2 className="section-title">Ranking Categoría B</h2>
             </div>
-            <button className="btn btn-secondary">Ver ranking completo</button>
+
+            <Link className="btn btn-secondary" to="/ranking">
+              Ver ranking completo
+            </Link>
           </div>
 
           <div className="ranking-table card">
@@ -184,7 +264,7 @@ function Home() {
           </div>
         </div>
       </section>
-      
+
       <section className="section admin-preview" id="admin">
         <div className="container admin-grid">
           <div>
@@ -212,7 +292,9 @@ function Home() {
               <span>Resultados pendientes</span>
               <strong>8</strong>
             </div>
-            <button className="btn btn-primary">Crear evento</button>
+            <Link className="btn btn-primary" to="/admin">
+              Ir al panel admin
+            </Link>
           </div>
         </div>
       </section>
