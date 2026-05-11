@@ -1,0 +1,119 @@
+.auth-page {
+  min-height: calc(100vh - 78px);
+  display: flex;
+  align-items: center;
+}
+
+.auth-card {
+  width: min(480px, 100%);
+  margin: 0 auto;
+  padding: 40px 36px;
+  display: grid;
+  gap: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: var(--color-lime);
+  border-radius: 999px;
+  filter: blur(110px);
+  opacity: 0.09;
+  right: -120px;
+  top: -120px;
+  pointer-events: none;
+}
+
+.auth-card > * {
+  position: relative;
+}
+
+.auth-header {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-title {
+  font-size: 2rem;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.auth-subtitle {
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.auth-form {
+  display: grid;
+  gap: 18px;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 15px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.auth-error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 12px 14px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.28);
+  border-radius: var(--radius-sm);
+}
+
+.auth-success {
+  color: var(--color-lime);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 12px 14px;
+  background: rgba(220, 251, 0, 0.1);
+  border: 1px solid rgba(220, 251, 0, 0.28);
+  border-radius: var(--radius-sm);
+}
+
+.auth-link-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.auth-link-btn:hover {
+  color: var(--color-lime);
+}
+
+.auth-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.auth-link {
+  color: var(--color-lime);
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+
+.auth-link:hover {
+  opacity: 0.8;
+}

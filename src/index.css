@@ -57,6 +57,15 @@ a {
   min-height: 100vh;
 }
 
+.auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
 .container {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;

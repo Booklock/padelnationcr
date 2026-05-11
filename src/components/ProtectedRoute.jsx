@@ -1,15 +1,23 @@
-import { Navigate } from "react-router-dom";
-import { currentUser } from "../data/mockUser";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 function ProtectedRoute({ children, allowedRoles = [] }) {
-  const isLoggedIn = Boolean(currentUser);
-  const hasPermission = allowedRoles.includes(currentUser?.role);
+  const { user, profile, loading } = useAuth();
+  const location = useLocation();
 
-  if (!isLoggedIn) {
-    return <Navigate to="/" replace />;
+  if (loading) {
+    return (
+      <div className="auth-loading">
+        <span>Cargando...</span>
+      </div>
+    );
   }
 
-  if (!hasPermission) {
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (allowedRoles.length > 0 && !allowedRoles.includes(profile?.role)) {
     return <Navigate to="/no-autorizado" replace />;
   }
 

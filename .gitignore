@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Variables de entorno con secrets (defensa adicional sobre *.local)
+.env
+.env.*
+!.env.example
+
+# Claude Code — directorio interno (worktrees, memoria, settings)
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
