@@ -32,8 +32,8 @@ function Register() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres.");
+    if (!validatePassword(formData.password)) {
+      setError("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.");
       return;
     }
 
@@ -122,7 +122,7 @@ function Register() {
             </label>
 
             <label className="form-field">
-              <span>Contraseña (mín. 8 caracteres)</span>
+              <span>Contraseña (mín. 8 caracteres, mayúscula, minúscula y número)</span>
               <input
                 type="password"
                 name="password"
@@ -167,6 +167,15 @@ function Register() {
         </div>
       </div>
     </main>
+  );
+}
+
+function validatePassword(password) {
+  return (
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[0-9]/.test(password)
   );
 }
 

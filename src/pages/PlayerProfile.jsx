@@ -1,163 +1,97 @@
+import { useAuth } from "../contexts/AuthContext";
+import { useProfile } from "../hooks/useProfile";
+import { formatEventDate, formatEventTime, FORMAT_LABELS, STATUS_LABELS, getInitials } from "../utils/formatters";
 import "./PlayerProfile.css";
 
-const player = {
-  name: "Carlos Vargas",
-  email: "carlos@email.com",
-  category: "B",
-  level: "B+",
-  rankingPosition: 2,
-  seasonPoints: 742,
-  nextLevel: "A-",
-  pointsToNextLevel: 158,
-  played: 18,
-  wins: 12,
-  losses: 6,
-  pointsFor: 375,
-  pointsAgainst: 337,
-  winRate: 67,
-};
-
-const upcomingEvents = [
-  {
-    id: 1,
-    title: "Pozo Mexicano Categoría B",
-    date: "Lunes 6 de mayo",
-    time: "7:00 p.m.",
-    location: "Padel Club Escazú",
-    status: "Confirmado",
-  },
-  {
-    id: 2,
-    title: "Americano Categoría B",
-    date: "Jueves 9 de mayo",
-    time: "8:00 p.m.",
-    location: "Santa Ana Padel",
-    status: "Pendiente",
-  },
-];
-
-const recentHistory = [
-  {
-    id: 1,
-    event: "Pozo Mexicano Categoría B",
-    result: "2 victorias / 1 derrota",
-    points: "+58 pts",
-    date: "28 abril",
-  },
-  {
-    id: 2,
-    event: "Reto Categoría B",
-    result: "Victoria",
-    points: "+32 pts",
-    date: "24 abril",
-  },
-  {
-    id: 3,
-    event: "Americano Categoría B",
-    result: "3 victorias / 2 derrotas",
-    points: "+44 pts",
-    date: "20 abril",
-  },
-];
-
 function PlayerProfile() {
-  const difference = player.pointsFor - player.pointsAgainst;
-  const progressToNextLevel = Math.round(
-    (player.seasonPoints / (player.seasonPoints + player.pointsToNextLevel)) *
-      100
+  const { isAdmin } = useAuth();
+  const { profile, registrations, results, rankingInfo, loading } = useProfile();
+
+  if (loading) {
+    return (
+      <main className="section profile-page">
+        <div className="container">
+          <div className="auth-loading"><span>Cargando perfil…</span></div>
+        </div>
+      </main>
+    );
+  }
+
+  const displayName   = profile?.full_name  ?? "Jugador";
+  const category      = profile?.current_category ?? "—";
+  const level         = profile?.current_level    ?? "—";
+  const totalPoints   = rankingInfo?.total_points   ?? 0;
+  const rankingPos    = rankingInfo?.position       ?? "—";
+  const eventsPlayed  = rankingInfo?.events_counted ?? 0;
+
+  // Stats calculadas del historial (no del ranking view, que es solo puntos)
+  const totalWins    = results.reduce((s, r) => s + (r.wins   ?? 0), 0);
+  const totalTies    = results.reduce((s, r) => s + (r.ties   ?? 0), 0);
+  const totalLosses  = results.reduce((s, r) => s + (r.losses ?? 0), 0);
+  const totalMatches = totalWins + totalTies + totalLosses;
+  const winRate      = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
+
+  const upcomingRegs = registrations.filter(
+    (r) => r.events?.status !== "finished" && r.events?.status !== "cancelled"
   );
+
+  const recentResults = results.slice(0, 5);
 
   return (
     <main className="section profile-page">
       <div className="container">
+
+        {/* Hero */}
         <section className="profile-hero card">
           <div className="profile-identity">
-            <div className="profile-avatar">
-              {getInitials(player.name)}
-            </div>
-
+            <div className="profile-avatar">{getInitials(displayName)}</div>
             <div>
-              <p className="section-kicker">Mi perfil</p>
-              <h1 className="section-title">{player.name}</h1>
+              <p className="section-kicker">{isAdmin ? "Admin" : "Mi perfil"}</p>
+              <h1 className="section-title">{displayName}</h1>
               <p className="section-description">
-                Seguí tu rendimiento, próximos eventos, historial competitivo y
-                progreso hacia el siguiente nivel.
+                Seguí tu rendimiento, próximos eventos e historial competitivo.
               </p>
             </div>
           </div>
 
           <div className="profile-level-card">
             <span>Nivel actual</span>
-            <strong>{player.level}</strong>
-            <small>Categoría {player.category}</small>
+            <strong>{level}</strong>
+            <small>Categoría {category}</small>
+            <small style={{ marginTop: 6, opacity: 0.7 }}>
+              Los cambios de nivel los decide el administrador.
+            </small>
           </div>
         </section>
 
+        {/* Stats */}
         <section className="profile-stats-grid">
           <div className="profile-stat-card card">
             <span>Puntos temporada</span>
-            <strong>{player.seasonPoints}</strong>
-            <small>Ranking #{player.rankingPosition}</small>
+            <strong>{totalPoints}</strong>
+            <small>Ranking #{rankingPos}</small>
           </div>
-
           <div className="profile-stat-card card">
-            <span>Partidos jugados</span>
-            <strong>{player.played}</strong>
-            <small>{player.wins} victorias</small>
+            <span>Eventos jugados</span>
+            <strong>{eventsPlayed}</strong>
+            <small>{totalWins} victorias · {totalTies} empates</small>
           </div>
-
           <div className="profile-stat-card card">
             <span>Win rate</span>
-            <strong>{player.winRate}%</strong>
-            <small>{player.wins}G / {player.losses}P</small>
+            <strong>{winRate}%</strong>
+            <small>{totalWins}G / {totalTies}E / {totalLosses}P</small>
           </div>
-
           <div className="profile-stat-card card">
-            <span>Diferencia</span>
-            <strong>
-              {difference >= 0 ? "+" : ""}
-              {difference}
-            </strong>
-            <small>Puntos a favor vs contra</small>
+            <span>Próximos eventos</span>
+            <strong>{upcomingRegs.length}</strong>
+            <small>Inscripciones activas</small>
           </div>
         </section>
 
         <section className="profile-main-grid">
           <div className="profile-left-column">
-            <article className="card profile-panel">
-              <div className="panel-header">
-                <div>
-                  <p className="section-kicker">Progreso</p>
-                  <h2>Camino hacia {player.nextLevel}</h2>
-                </div>
-              </div>
 
-              <p className="profile-panel-description">
-                Estás a {player.pointsToNextLevel} puntos de ser candidato para
-                subir a nivel {player.nextLevel}. Los ascensos pueden quedar
-                sujetos a revisión administrativa.
-              </p>
-
-              <div className="profile-progress">
-                <div className="profile-progress-top">
-                  <span>{player.seasonPoints} pts</span>
-                  <strong>{progressToNextLevel}%</strong>
-                </div>
-
-                <div className="progress-track">
-                  <div
-                    className="progress-bar"
-                    style={{ width: `${progressToNextLevel}%` }}
-                  />
-                </div>
-
-                <div className="profile-progress-bottom">
-                  <span>{player.level}</span>
-                  <span>{player.nextLevel}</span>
-                </div>
-              </div>
-            </article>
-
+            {/* Historial reciente */}
             <article className="card profile-panel">
               <div className="panel-header">
                 <div>
@@ -166,24 +100,32 @@ function PlayerProfile() {
                 </div>
               </div>
 
-              <div className="history-list">
-                {recentHistory.map((item) => (
-                  <div className="history-item" key={item.id}>
-                    <div>
-                      <strong>{item.event}</strong>
-                      <small>
-                        {item.date} · {item.result}
-                      </small>
+              {recentResults.length === 0 ? (
+                <p className="profile-empty">Aún no hay resultados registrados.</p>
+              ) : (
+                <div className="history-list">
+                  {recentResults.map((item) => (
+                    <div className="history-item" key={item.id}>
+                      <div>
+                        <strong>{item.events?.title ?? "Evento"}</strong>
+                        <small>
+                          {formatEventDate(item.events?.starts_at)} ·{" "}
+                          {item.wins}V / {item.ties}E / {item.losses}P
+                        </small>
+                      </div>
+                      <span className={item.excluded ? "points-excluded" : ""}>
+                        {item.excluded ? "(excluido)" : `+${item.points_earned} pts`}
+                      </span>
                     </div>
-
-                    <span>{item.points}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </article>
           </div>
 
           <aside className="profile-right-column">
+
+            {/* Próximos eventos */}
             <article className="card profile-panel">
               <div className="panel-header">
                 <div>
@@ -192,27 +134,31 @@ function PlayerProfile() {
                 </div>
               </div>
 
-              <div className="profile-events-list">
-                {upcomingEvents.map((event) => (
-                  <div className="profile-event-card" key={event.id}>
-                    <span className="badge">{event.status}</span>
-                    <h3>{event.title}</h3>
-                    <p>
-                      {event.date} · {event.time}
-                    </p>
-                    <small>{event.location}</small>
-                  </div>
-                ))}
-              </div>
+              {upcomingRegs.length === 0 ? (
+                <p className="profile-empty">No tenés eventos próximos.</p>
+              ) : (
+                <div className="profile-events-list">
+                  {upcomingRegs.map((reg) => (
+                    <div className="profile-event-card" key={reg.id}>
+                      <span className="badge">
+                        {reg.status === "waitlist" ? "Lista de espera" : STATUS_LABELS[reg.events?.status] ?? "Confirmado"}
+                      </span>
+                      <h3>{reg.events?.title ?? "Evento"}</h3>
+                      <p>{formatEventDate(reg.events?.starts_at)} · {formatEventTime(reg.events?.starts_at)}</p>
+                      {reg.events?.location && <small>{reg.events.location}</small>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </article>
 
+            {/* Placeholder futuro premium */}
             <article className="card profile-panel premium-preview">
               <span className="badge">Futuro Premium</span>
               <h2>Estadísticas avanzadas</h2>
               <p>
-                En una fase futura, los jugadores premium podrán ver análisis
-                avanzado, tendencias de rendimiento, historial completo y
-                prioridad de inscripción.
+                En una fase futura se podrán ver análisis avanzado, tendencias de
+                rendimiento e historial completo.
               </p>
             </article>
           </aside>
@@ -220,15 +166,6 @@ function PlayerProfile() {
       </div>
     </main>
   );
-}
-
-function getInitials(name) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 }
 
 export default PlayerProfile;

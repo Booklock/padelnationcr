@@ -1,19 +1,21 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import { combineDateTime } from "../utils/formatters";
 import "./CreateEvent.css";
 
-const eventFormats = ["Mexicano", "Americano", "Reto", "Torneo"];
-const eventCategories = ["AA", "A", "B", "C", "D"];
+const EVENT_FORMATS    = ["Mexicano", "Americano", "Reto", "Torneo"];
+const EVENT_CATEGORIES = ["AA", "A", "B", "C", "D"];
 
-const categoryLevels = {
+const CATEGORY_LEVELS = {
   AA: ["AA"],
-  A: ["A+", "A", "A-"],
-  B: ["B+", "B", "B-"],
-  C: ["C+", "C", "C-"],
-  D: ["D+", "D", "D-"],
+  A:  ["A+", "A", "A-"],
+  B:  ["B+", "B", "B-"],
+  C:  ["C+", "C", "C-"],
+  D:  ["D+", "D", "D-"],
 };
 
-const formatDescriptions = {
+const FORMAT_DESCRIPTIONS = {
   Mexicano:
     "La primera ronda se genera al azar. Después, las siguientes rondas se organizan según el puntaje acumulado de cada jugador.",
   Americano:
@@ -24,51 +26,132 @@ const formatDescriptions = {
     "Formato futuro para llaves, grupos, semifinales y final. Ideal para eventos competitivos más grandes.",
 };
 
+/** Puntos por posición por defecto (hasta 8 posiciones, curva suave). */
+function buildDefaultPointRules(eventId, positions) {
+  const total  = Math.min(positions, 8);
+  const scale  = [100, 80, 65, 52, 40, 30, 20, 10];
+  const rules  = [];
+  for (let pos = 1; pos <= total; pos++) {
+    rules.push({ event_id: eventId, position: pos, points: scale[pos - 1] ?? 5 });
+  }
+  return rules;
+}
+
 function CreateEvent() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    title: "Pozo Mexicano Categoría B",
-    format: "Mexicano",
-    category: "B",
-    date: "2026-05-10",
-    time: "19:00",
-    location: "Padel Club Escazú",
-    playerLimit: 16,
-    courts: 4,
-    rounds: 4,
+    title:         "",
+    format:        "Mexicano",
+    category:      "B",
+    date:          "",
+    time:          "19:00",
+    location:      "",
+    playerLimit:   16,
+    courts:        4,
+    rounds:        4,
     matchDuration: 15,
-    price: 8000,
-    prize: "Premio para el primer lugar",
-    status: "Abierto",
+    price:         0,
+    prize:         "",
   });
 
-  const allowedLevels = useMemo(() => {
-    return categoryLevels[formData.category] || [];
-  }, [formData.category]);
+  const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
-  const estimatedMatchesPerRound = Math.floor(
-    Number(formData.playerLimit) / 4
+  const allowedLevels = useMemo(
+    () => CATEGORY_LEVELS[formData.category] ?? [],
+    [formData.category]
   );
 
+  const estimatedMatchesPerRound = Math.floor(Number(formData.playerLimit) / 4);
   const totalEstimatedMatches =
     formData.format === "Reto"
       ? 1
       : estimatedMatchesPerRound * Number(formData.rounds);
 
-  function handleChange(event) {
-    const { name, value } = event.target;
-
-    setFormData((currentData) => ({
-      ...currentData,
-      [name]: value,
-    }));
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (saving) return;
 
-    alert(
-      "Mockup: el evento se creó visualmente. En la versión real se guardará en la base de datos."
-    );
+    if (!formData.title.trim()) {
+      setSaveError("El nombre del evento es obligatorio.");
+      return;
+    }
+    if (!formData.date) {
+      setSaveError("La fecha es obligatoria.");
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      // 1. Obtener temporada activa
+      const { data: season, error: seasonErr } = await supabase
+        .from("seasons")
+        .select("id")
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (seasonErr) throw seasonErr;
+      if (!season) throw new Error("No hay temporada activa. Creá una en el panel de Supabase.");
+
+      // 2. Buscar UUID de la categoría (opcional — no bloquea si no existe)
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("code", formData.category)
+        .maybeSingle();
+
+      // 3. Construir timestamp de inicio
+      const starts_at = combineDateTime(formData.date, formData.time);
+
+      // 4. Insertar evento
+      const { data: newEvent, error: eventErr } = await supabase
+        .from("events")
+        .insert({
+          season_id:           season.id,
+          title:               formData.title.trim(),
+          format:              formData.format.toLowerCase(),
+          category_id:         cat?.id ?? null,
+          category_code:       formData.category,
+          starts_at,
+          location:            formData.location.trim() || null,
+          player_limit:        Number(formData.playerLimit),
+          courts:              Number(formData.courts),
+          rounds_planned:      formData.format === "Reto" ? 1 : Number(formData.rounds),
+          match_end_criterion: "time",
+          match_end_value:     Number(formData.matchDuration),
+          price:               Number(formData.price),
+          description:         formData.prize.trim() || null,
+          status:              "open",
+        })
+        .select()
+        .single();
+
+      if (eventErr) throw eventErr;
+
+      // 5. Insertar reglas de puntos por defecto
+      const rules = buildDefaultPointRules(newEvent.id, Number(formData.playerLimit));
+      if (rules.length > 0) {
+        const { error: rulesErr } = await supabase
+          .from("event_point_rules")
+          .insert(rules);
+        if (rulesErr) console.warn("No se pudieron crear las reglas de puntos:", rulesErr.message);
+      }
+
+      // 6. Navegar al coordinador del nuevo evento
+      navigate(`/admin/evento/${newEvent.id}`);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -84,20 +167,21 @@ function CreateEvent() {
             <h1 className="section-title">Crear evento Padel Nation</h1>
             <p className="section-description">
               Configurá el formato, categoría, cupos, canchas, rondas y detalles
-              principales del evento. Esta pantalla luego se conectará a la base
-              de datos real.
+              principales del evento. Se guardará directamente en la base de datos.
             </p>
           </div>
 
           <div className="create-event-format-card">
             <span>Formato seleccionado</span>
             <strong>{formData.format}</strong>
-            <small>{formData.category}</small>
+            <small>Categoría {formData.category}</small>
           </div>
         </section>
 
         <section className="create-event-layout">
           <form className="card create-event-form" onSubmit={handleSubmit}>
+
+            {/* Información general */}
             <div className="form-section">
               <div>
                 <p className="section-kicker">Información general</p>
@@ -106,52 +190,43 @@ function CreateEvent() {
 
               <div className="form-grid">
                 <label className="form-field form-field-wide">
-                  <span>Nombre del evento</span>
+                  <span>Nombre del evento *</span>
                   <input
                     type="text"
                     name="title"
                     value={formData.title}
                     onChange={handleChange}
+                    placeholder="Ej. Pozo Mexicano Categoría B"
+                    required
                   />
                 </label>
 
                 <label className="form-field">
                   <span>Formato</span>
-                  <select
-                    name="format"
-                    value={formData.format}
-                    onChange={handleChange}
-                  >
-                    {eventFormats.map((format) => (
-                      <option key={format} value={format}>
-                        {format}
-                      </option>
+                  <select name="format" value={formData.format} onChange={handleChange}>
+                    {EVENT_FORMATS.map((f) => (
+                      <option key={f} value={f}>{f}</option>
                     ))}
                   </select>
                 </label>
 
                 <label className="form-field">
                   <span>Categoría</span>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                  >
-                    {eventCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
+                  <select name="category" value={formData.category} onChange={handleChange}>
+                    {EVENT_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </label>
 
                 <label className="form-field">
-                  <span>Fecha</span>
+                  <span>Fecha *</span>
                   <input
                     type="date"
                     name="date"
                     value={formData.date}
                     onChange={handleChange}
+                    required
                   />
                 </label>
 
@@ -172,11 +247,13 @@ function CreateEvent() {
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
+                    placeholder="Ej. Padel Club Escazú"
                   />
                 </label>
               </div>
             </div>
 
+            {/* Configuración deportiva */}
             <div className="form-section">
               <div>
                 <p className="section-kicker">Configuración deportiva</p>
@@ -220,7 +297,7 @@ function CreateEvent() {
                 </label>
 
                 <label className="form-field">
-                  <span>Duración por partido</span>
+                  <span>Duración por partido (min)</span>
                   <input
                     type="number"
                     min="5"
@@ -233,10 +310,11 @@ function CreateEvent() {
 
               <div className="format-explanation">
                 <strong>{formData.format}</strong>
-                <p>{formatDescriptions[formData.format]}</p>
+                <p>{FORMAT_DESCRIPTIONS[formData.format]}</p>
               </div>
             </div>
 
+            {/* Comercial */}
             <div className="form-section">
               <div>
                 <p className="section-kicker">Comercial</p>
@@ -255,47 +333,39 @@ function CreateEvent() {
                   />
                 </label>
 
-                <label className="form-field">
-                  <span>Estado</span>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                  >
-                    <option value="Abierto">Abierto</option>
-                    <option value="Casi lleno">Casi lleno</option>
-                    <option value="Cerrado">Cerrado</option>
-                    <option value="Finalizado">Finalizado</option>
-                  </select>
-                </label>
-
                 <label className="form-field form-field-wide">
                   <span>Premio o descripción</span>
                   <textarea
                     name="prize"
-                    rows="4"
+                    rows="3"
                     value={formData.prize}
                     onChange={handleChange}
+                    placeholder="Ej. Premio para el primer lugar"
                   />
                 </label>
               </div>
             </div>
 
+            {saveError && (
+              <p className="auth-error" role="alert">{saveError}</p>
+            )}
+
             <div className="form-actions">
               <Link className="btn btn-secondary" to="/admin">
                 Cancelar
               </Link>
-              <button className="btn btn-primary" type="submit">
-                Crear evento
+              <button className="btn btn-primary" type="submit" disabled={saving}>
+                {saving ? "Guardando…" : "Crear evento"}
               </button>
             </div>
           </form>
 
+          {/* Sidebar preview */}
           <aside className="create-event-sidebar">
             <article className="card event-preview-card">
               <div className="event-preview-top">
                 <span className="badge">{formData.format}</span>
-                <span className="preview-status">{formData.status}</span>
+                <span className="preview-status">Abierto</span>
               </div>
 
               <div className="preview-category">
@@ -303,20 +373,20 @@ function CreateEvent() {
                 <strong>{formData.category}</strong>
               </div>
 
-              <h2>{formData.title}</h2>
+              <h2>{formData.title || "Nombre del evento"}</h2>
 
               <div className="preview-info">
                 <div>
                   <span>Fecha</span>
-                  <strong>{formatDate(formData.date)}</strong>
+                  <strong>{formData.date ? formatDateDisplay(formData.date) : "Sin fecha"}</strong>
                 </div>
                 <div>
                   <span>Hora</span>
-                  <strong>{formData.time}</strong>
+                  <strong>{formData.time || "—"}</strong>
                 </div>
                 <div>
                   <span>Ubicación</span>
-                  <strong>{formData.location}</strong>
+                  <strong>{formData.location || "—"}</strong>
                 </div>
                 <div>
                   <span>Precio</span>
@@ -370,16 +440,12 @@ function CreateEvent() {
   );
 }
 
-function formatDate(dateValue) {
-  if (!dateValue) return "Sin fecha";
-
-  const date = new Date(`${dateValue}T00:00:00`);
-
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return "Sin fecha";
+  const d = new Date(`${dateStr}T00:00:00`);
   return new Intl.DateTimeFormat("es-CR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(date);
+    day: "numeric", month: "long", year: "numeric",
+  }).format(d);
 }
 
 export default CreateEvent;

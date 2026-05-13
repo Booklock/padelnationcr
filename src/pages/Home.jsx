@@ -1,28 +1,41 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { mockEvents, mockRanking } from "../data/mockEvents";
+import { useEvents } from "../hooks/useEvents";
+import { useRanking } from "../hooks/useRanking";
+import {
+  FORMAT_LABELS,
+  STATUS_LABELS,
+  formatEventDate,
+  formatEventTime,
+} from "../utils/formatters";
 import "./Home.css";
 
 function Home() {
+  const { events, loading: eventsLoading } = useEvents({
+    excludeStatuses: ["draft", "cancelled"],
+  });
+  const { ranking, loading: rankingLoading } = useRanking({});
+
+  const featuredEvents = events.slice(0, 5);
+  const topRanking     = ranking.slice(0, 5);
+
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
 
-  const featuredEvents = mockEvents.slice(0, 5);
-  const currentEvent = featuredEvents[currentEventIndex];
+  const safeIndex    = featuredEvents.length > 0
+    ? Math.min(currentEventIndex, featuredEvents.length - 1)
+    : 0;
+  const currentEvent = featuredEvents[safeIndex] ?? null;
 
-  function goToPreviousEvent() {
-    setCurrentEventIndex((currentIndex) =>
-      currentIndex === 0 ? featuredEvents.length - 1 : currentIndex - 1
-    );
+  function goToPrev() {
+    setCurrentEventIndex((i) => (i === 0 ? Math.max(featuredEvents.length - 1, 0) : i - 1));
   }
-
-  function goToNextEvent() {
-    setCurrentEventIndex((currentIndex) =>
-      currentIndex === featuredEvents.length - 1 ? 0 : currentIndex + 1
-    );
+  function goToNext() {
+    setCurrentEventIndex((i) => (i >= featuredEvents.length - 1 ? 0 : i + 1));
   }
 
   return (
     <main>
+      {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="hero">
         <div className="container hero-grid">
           <div className="hero-copy">
@@ -47,38 +60,33 @@ function Home() {
 
           <div className="hero-panel card">
             <div className="hero-panel-header">
-              <span>Evento destacado</span>
-              <strong>En vivo</strong>
+              <span>Plataforma</span>
+              <strong>Temporada 2026</strong>
             </div>
 
             <div className="score-card">
               <div>
-                <small>Pozo Mexicano</small>
-                <h3>Categoría B</h3>
+                <small>Pozos y retos</small>
+                <h3>Ranking en vivo</h3>
               </div>
-              <span className="score-category">B</span>
+              <span className="score-category">CR</span>
             </div>
 
-            <div className="match-preview">
-              <p>Ronda 2 · Cancha 1</p>
-              <div className="teams">
-                <span>Carlos + Diego</span>
-                <strong>18</strong>
+            {rankingLoading ? (
+              <div className="ranking-mini">
+                <span>Cargando ranking…</span>
               </div>
-              <div className="teams">
-                <span>Andrés + Luis</span>
-                <strong>16</strong>
+            ) : topRanking[0] ? (
+              <div className="ranking-mini">
+                <span>#1 {topRanking[0].full_name}</span>
+                <strong>{topRanking[0].total_points} pts</strong>
               </div>
-            </div>
-
-            <div className="ranking-mini">
-              <span>#1 Carlos Vargas</span>
-              <strong>742 pts</strong>
-            </div>
+            ) : null}
           </div>
         </div>
       </section>
 
+      {/* ── Carrusel de próximos eventos ─────────────────────── */}
       <section className="section" id="events">
         <div className="container">
           <div className="section-header">
@@ -92,52 +100,62 @@ function Home() {
                 Una vista rápida de los próximos eventos. La lista completa vive
                 en la sección de Eventos.
               </p>
-
               <Link className="btn btn-secondary" to="/eventos">
                 Ver todos
               </Link>
             </div>
           </div>
 
-          {currentEvent && (
+          {eventsLoading ? (
+            <div className="empty-state card"><p>Cargando eventos…</p></div>
+          ) : currentEvent ? (
             <div className="home-event-carousel card">
               <article className="home-event-slide">
                 <div className="home-event-main">
                   <div className="event-card-top">
-                    <span className="badge">{currentEvent.format}</span>
-                    <span className="event-status">{currentEvent.status}</span>
+                    <span className="badge">
+                      {FORMAT_LABELS[currentEvent.format] ?? currentEvent.format}
+                    </span>
+                    <span className="event-status">
+                      {STATUS_LABELS[currentEvent.status] ?? currentEvent.status}
+                    </span>
                   </div>
 
                   <h3>{currentEvent.title}</h3>
 
                   <div className="event-meta">
-                    <span>{currentEvent.date}</span>
-                    <span>{currentEvent.time}</span>
-                    <span>{currentEvent.location}</span>
+                    <span>{formatEventDate(currentEvent.starts_at)}</span>
+                    <span>{formatEventTime(currentEvent.starts_at)}</span>
+                    {currentEvent.location && <span>{currentEvent.location}</span>}
                   </div>
 
                   <div className="event-details">
                     <div>
                       <small>Cupos</small>
                       <strong>
-                        {currentEvent.playersRegistered}/
-                        {currentEvent.playerLimit}
+                        {currentEvent.players_registered}/{currentEvent.player_limit}
                       </strong>
                     </div>
 
-                    <div>
-                      <small>Canchas</small>
-                      <strong>{currentEvent.courts}</strong>
-                    </div>
+                    {currentEvent.courts && (
+                      <div>
+                        <small>Canchas</small>
+                        <strong>{currentEvent.courts}</strong>
+                      </div>
+                    )}
 
-                    <div>
-                      <small>Niveles</small>
-                      <strong>{currentEvent.allowedLevels.join(", ")}</strong>
-                    </div>
+                    {currentEvent.allowed_levels?.length > 0 && (
+                      <div>
+                        <small>Niveles</small>
+                        <strong>{currentEvent.allowed_levels.join(", ")}</strong>
+                      </div>
+                    )}
                   </div>
 
                   <div className="home-event-actions">
-                    <button className="btn btn-primary">Inscribirme</button>
+                    <Link className="btn btn-primary" to="/eventos">
+                      Inscribirme
+                    </Link>
                     <Link className="btn btn-secondary" to="/eventos">
                       Ver detalles
                     </Link>
@@ -146,53 +164,56 @@ function Home() {
 
                 <div className="home-event-category">
                   <span>Categoría</span>
-                  <strong>{currentEvent.category}</strong>
+                  <strong>{currentEvent.category_code}</strong>
                   <small>
-                    {currentEventIndex + 1} de {featuredEvents.length}
+                    {safeIndex + 1} de {featuredEvents.length}
                   </small>
                 </div>
               </article>
 
-              <div className="home-carousel-controls">
-                <button
-                  className="carousel-nav-btn"
-                  onClick={goToPreviousEvent}
-                  type="button"
-                  aria-label="Evento anterior"
-                >
-                  ←
-                </button>
+              {featuredEvents.length > 1 && (
+                <div className="home-carousel-controls">
+                  <button
+                    className="carousel-nav-btn"
+                    onClick={goToPrev}
+                    type="button"
+                    aria-label="Evento anterior"
+                  >
+                    ←
+                  </button>
 
-                <div className="carousel-dots">
-                  {featuredEvents.map((event, index) => (
-                    <button
-                      key={event.id}
-                      className={
-                        index === currentEventIndex
-                          ? "carousel-dot active"
-                          : "carousel-dot"
-                      }
-                      onClick={() => setCurrentEventIndex(index)}
-                      type="button"
-                      aria-label={`Ir al evento ${index + 1}`}
-                    />
-                  ))}
+                  <div className="carousel-dots">
+                    {featuredEvents.map((_, index) => (
+                      <button
+                        key={index}
+                        className={index === safeIndex ? "carousel-dot active" : "carousel-dot"}
+                        onClick={() => setCurrentEventIndex(index)}
+                        type="button"
+                        aria-label={`Ir al evento ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    className="carousel-nav-btn"
+                    onClick={goToNext}
+                    type="button"
+                    aria-label="Siguiente evento"
+                  >
+                    →
+                  </button>
                 </div>
-
-                <button
-                  className="carousel-nav-btn"
-                  onClick={goToNextEvent}
-                  type="button"
-                  aria-label="Siguiente evento"
-                >
-                  →
-                </button>
-              </div>
+              )}
+            </div>
+          ) : (
+            <div className="empty-state card">
+              <p>No hay eventos próximos en este momento.</p>
             </div>
           )}
         </div>
       </section>
 
+      {/* ── Formatos ─────────────────────────────────────────── */}
       <section className="section how-section" id="how-it-works">
         <div className="container">
           <div className="section-header">
@@ -226,12 +247,13 @@ function Home() {
         </div>
       </section>
 
+      {/* ── Ranking preview ───────────────────────────────────── */}
       <section className="section" id="ranking">
         <div className="container">
           <div className="section-header">
             <div>
               <p className="section-kicker">Ranking</p>
-              <h2 className="section-title">Ranking Categoría B</h2>
+              <h2 className="section-title">Top 5 temporada 2026</h2>
             </div>
 
             <Link className="btn btn-secondary" to="/ranking">
@@ -245,26 +267,37 @@ function Home() {
               <span>Jugador</span>
               <span>Nivel</span>
               <span>Puntos</span>
-              <span>PJ</span>
-              <span>PG</span>
-              <span>Dif.</span>
+              <span>Eventos</span>
             </div>
 
-            {mockRanking.map((player) => (
-              <div className="ranking-row" key={player.position}>
-                <span>#{player.position}</span>
-                <strong>{player.name}</strong>
-                <span className="level-pill">{player.level}</span>
-                <span>{player.points}</span>
-                <span>{player.played}</span>
-                <span>{player.wins}</span>
-                <span>{player.difference}</span>
+            {rankingLoading ? (
+              <div className="ranking-row">
+                <span colSpan="5" style={{ color: "var(--color-text-muted)" }}>
+                  Cargando…
+                </span>
               </div>
-            ))}
+            ) : topRanking.length === 0 ? (
+              <div className="ranking-row">
+                <span style={{ color: "var(--color-text-muted)", gridColumn: "1 / -1" }}>
+                  Aún no hay jugadores en el ranking.
+                </span>
+              </div>
+            ) : (
+              topRanking.map((player, index) => (
+                <div className="ranking-row" key={player.player_id}>
+                  <span>#{index + 1}</span>
+                  <strong>{player.full_name}</strong>
+                  <span className="level-pill">{player.level_code ?? "—"}</span>
+                  <span>{player.total_points}</span>
+                  <span>{player.events_counted}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
 
+      {/* ── Admin preview ─────────────────────────────────────── */}
       <section className="section admin-preview" id="admin">
         <div className="container admin-grid">
           <div>
@@ -282,15 +315,15 @@ function Home() {
           <div className="admin-card card">
             <div className="admin-stat">
               <span>Eventos activos</span>
-              <strong>4</strong>
+              <strong>{eventsLoading ? "…" : events.filter(e => e.status === "open" || e.status === "almost_full").length}</strong>
             </div>
             <div className="admin-stat">
-              <span>Jugadores registrados</span>
-              <strong>126</strong>
+              <span>Jugadores en ranking</span>
+              <strong>{rankingLoading ? "…" : ranking.length}</strong>
             </div>
             <div className="admin-stat">
-              <span>Resultados pendientes</span>
-              <strong>8</strong>
+              <span>Temporada</span>
+              <strong>2026</strong>
             </div>
             <Link className="btn btn-primary" to="/admin">
               Ir al panel admin

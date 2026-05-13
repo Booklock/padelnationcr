@@ -1,25 +1,25 @@
 import { useMemo, useState } from "react";
-import { mockEvents } from "../data/mockEvents";
+import { useEvents } from "../hooks/useEvents";
+import { FORMAT_LABELS, STATUS_LABELS, STATUS_CLASS, formatEventDate, formatEventTime } from "../utils/formatters";
 import "./Events.css";
 
-const categories = ["Todos", "AA", "A", "B", "C", "D"];
-const formats = ["Todos", "Mexicano", "Americano", "Reto", "Torneo"];
+const CATEGORIES = ["Todos", "AA", "A", "B", "C", "D"];
+const FORMATS    = ["Todos", "Mexicano", "Americano", "Reto", "Torneo"];
 
 function Events() {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
-  const [selectedFormat, setSelectedFormat] = useState("Todos");
+  const [selectedFormat,   setSelectedFormat]   = useState("Todos");
 
-  const filteredEvents = useMemo(() => {
-    return mockEvents.filter((event) => {
-      const matchesCategory =
-        selectedCategory === "Todos" || event.category === selectedCategory;
+  const { events, loading, error } = useEvents({
+    excludeStatuses: ["draft", "cancelled"],
+    category: selectedCategory !== "Todos" ? selectedCategory : undefined,
+    format:   selectedFormat   !== "Todos" ? selectedFormat   : undefined,
+  });
 
-      const matchesFormat =
-        selectedFormat === "Todos" || event.format === selectedFormat;
-
-      return matchesCategory && matchesFormat;
-    });
-  }, [selectedCategory, selectedFormat]);
+  const activeCount = useMemo(
+    () => events.filter((e) => e.status === "open" || e.status === "almost_full").length,
+    [events]
+  );
 
   return (
     <main className="section events-page">
@@ -36,7 +36,7 @@ function Events() {
 
           <div className="events-hero-stat">
             <span>Eventos activos</span>
-            <strong>{mockEvents.length}</strong>
+            <strong>{loading ? "…" : activeCount}</strong>
             <small>Disponibles para inscripción</small>
           </div>
         </div>
@@ -45,17 +45,13 @@ function Events() {
           <div>
             <h2>Categoría</h2>
             <div className="filter-list">
-              {categories.map((category) => (
+              {CATEGORIES.map((cat) => (
                 <button
-                  key={category}
-                  className={
-                    selectedCategory === category
-                      ? "filter-pill active"
-                      : "filter-pill"
-                  }
-                  onClick={() => setSelectedCategory(category)}
+                  key={cat}
+                  className={selectedCategory === cat ? "filter-pill active" : "filter-pill"}
+                  onClick={() => setSelectedCategory(cat)}
                 >
-                  {category}
+                  {cat}
                 </button>
               ))}
             </div>
@@ -64,17 +60,13 @@ function Events() {
           <div>
             <h2>Formato</h2>
             <div className="filter-list">
-              {formats.map((format) => (
+              {FORMATS.map((fmt) => (
                 <button
-                  key={format}
-                  className={
-                    selectedFormat === format
-                      ? "filter-pill active"
-                      : "filter-pill"
-                  }
-                  onClick={() => setSelectedFormat(format)}
+                  key={fmt}
+                  className={selectedFormat === fmt ? "filter-pill active" : "filter-pill"}
+                  onClick={() => setSelectedFormat(fmt)}
                 >
-                  {format}
+                  {fmt}
                 </button>
               ))}
             </div>
@@ -86,31 +78,51 @@ function Events() {
             <div>
               <p className="section-kicker">Disponibles</p>
               <h2>
-                {filteredEvents.length}{" "}
-                {filteredEvents.length === 1 ? "evento encontrado" : "eventos encontrados"}
+                {loading ? "Cargando…" : `${events.length} ${events.length === 1 ? "evento encontrado" : "eventos encontrados"}`}
               </h2>
             </div>
           </div>
 
-          {filteredEvents.length > 0 ? (
+          {loading && (
+            <div className="empty-state card">
+              <p>Cargando eventos…</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="empty-state card">
+              <h3>No se pudieron cargar los eventos.</h3>
+              <p>Verificá tu conexión y recargá la página.</p>
+            </div>
+          )}
+
+          {!loading && !error && events.length === 0 && (
+            <div className="empty-state card">
+              <h3>No encontramos eventos con esos filtros.</h3>
+              <p>Probá cambiar la categoría o el formato.</p>
+            </div>
+          )}
+
+          {!loading && !error && events.length > 0 && (
             <div className="events-grid">
-              {filteredEvents.map((event) => {
-                const occupancy = Math.round(
-                  (event.playersRegistered / event.playerLimit) * 100
-                );
+              {events.map((event) => {
+                const occupancy = event.player_limit > 0
+                  ? Math.round((event.players_registered / event.player_limit) * 100)
+                  : 0;
+                const isClosed = event.status === "closed" || event.status === "finished";
+                const statusLabel = STATUS_LABELS[event.status] ?? event.status;
+                const statusClass = STATUS_CLASS[event.status] ?? "";
 
                 return (
                   <article className="event-page-card card" key={event.id}>
                     <div className="event-page-card-header">
-                      <span className="badge">{event.format}</span>
-                      <span className={`status-pill ${getStatusClass(event.status)}`}>
-                        {event.status}
-                      </span>
+                      <span className="badge">{FORMAT_LABELS[event.format] ?? event.format}</span>
+                      <span className={`status-pill ${statusClass}`}>{statusLabel}</span>
                     </div>
 
                     <div className="event-category-mark">
                       <span>Categoría</span>
-                      <strong>{event.category}</strong>
+                      <strong>{event.category_code}</strong>
                     </div>
 
                     <h3>{event.title}</h3>
@@ -118,72 +130,56 @@ function Events() {
                     <div className="event-info-list">
                       <div>
                         <span>Fecha</span>
-                        <strong>{event.date}</strong>
+                        <strong>{formatEventDate(event.starts_at)}</strong>
                       </div>
                       <div>
                         <span>Hora</span>
-                        <strong>{event.time}</strong>
+                        <strong>{formatEventTime(event.starts_at)}</strong>
                       </div>
-                      <div>
-                        <span>Ubicación</span>
-                        <strong>{event.location}</strong>
-                      </div>
+                      {event.location && (
+                        <div>
+                          <span>Ubicación</span>
+                          <strong>{event.location}</strong>
+                        </div>
+                      )}
                     </div>
 
                     <div className="event-progress">
                       <div className="event-progress-top">
                         <span>Cupos</span>
-                        <strong>
-                          {event.playersRegistered}/{event.playerLimit}
-                        </strong>
+                        <strong>{event.players_registered}/{event.player_limit}</strong>
                       </div>
-
                       <div className="progress-track">
-                        <div
-                          className="progress-bar"
-                          style={{ width: `${occupancy}%` }}
-                        />
+                        <div className="progress-bar" style={{ width: `${occupancy}%` }} />
                       </div>
                     </div>
 
-                    <div className="event-levels">
-                      <span>Niveles permitidos</span>
-                      <div>
-                        {event.allowedLevels.map((level) => (
-                          <strong key={level}>{level}</strong>
-                        ))}
+                    {event.allowed_levels?.length > 0 && (
+                      <div className="event-levels">
+                        <span>Niveles permitidos</span>
+                        <div>
+                          {event.allowed_levels.map((lvl) => (
+                            <strong key={lvl}>{lvl}</strong>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <button
                       className="btn btn-primary event-register-btn"
-                      disabled={event.status === "Cerrado"}
+                      disabled={isClosed}
                     >
-                      {event.status === "Cerrado" ? "Evento cerrado" : "Inscribirme"}
+                      {isClosed ? "Evento cerrado" : "Inscribirme"}
                     </button>
                   </article>
                 );
               })}
-            </div>
-          ) : (
-            <div className="empty-state card">
-              <h3>No encontramos eventos con esos filtros.</h3>
-              <p>
-                Probá cambiar la categoría o el formato para ver más opciones.
-              </p>
             </div>
           )}
         </section>
       </div>
     </main>
   );
-}
-
-function getStatusClass(status) {
-  if (status === "Abierto") return "status-open";
-  if (status === "Casi lleno") return "status-warning";
-  if (status === "Cerrado") return "status-closed";
-  return "";
 }
 
 export default Events;
