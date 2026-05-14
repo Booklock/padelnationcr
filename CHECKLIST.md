@@ -19,7 +19,7 @@
 
 ## 🟠 P2 — Reglas del negocio
 
-- [ ] **2.1 Empates en pozos**: matches pueden terminar empatados. Al cerrar el evento desempatar: wins → empates → head-to-head diff
+- [x] **2.1 Empates en pozos**: matches pueden terminar empatados. Al cerrar el evento desempatar: wins → empates → head-to-head diff
 - [ ] **2.2 Criterio de fin de partido**: selector `tiempo` / `games` / `puntos` + valor objetivo en CreateEvent
 - [ ] **2.3 Historial de pozos**: vista de resultados anteriores filtrable + sección en perfil
 - [x] **2.4 Inscripciones + Waitlist**: estados `confirmed`/`waitlist`/`cancelled`, promoción automática al cancelar
@@ -57,4 +57,4 @@
 
 ---
 
-**Progreso:** 11 / 37 ítems completos (29.7%)
+**Progreso:** 12 / 37 ítems completos (32.4%)

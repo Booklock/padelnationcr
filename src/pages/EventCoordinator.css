@@ -197,3 +197,87 @@
 .match-actions .btn {
   width: 100%;
 }
+
+/* ── Banner evento finalizado ── */
+.event-finished-banner {
+  padding: 20px 24px;
+  margin-bottom: 22px;
+  background: rgba(220, 251, 0, 0.1);
+  border: 1px solid rgba(220, 251, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.event-finished-banner strong {
+  color: var(--color-lime);
+  font-size: 1.1rem;
+}
+
+.event-finished-banner p {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Sección de cierre / finalización ── */
+.finalize-section {
+  margin-top: 22px;
+}
+
+.finalize-note {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+.finalize-note strong {
+  color: var(--color-white);
+}
+
+.final-positions-list {
+  display: grid;
+  gap: 10px;
+}
+
+.final-position-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+}
+
+.final-position-row small {
+  display: block;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* Badge de posición: top 3 con colores especiales */
+.final-pos-badge {
+  font-weight: 950;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+.final-pos-badge.top-1 { color: #ffd700; }
+.final-pos-badge.top-2 { color: #c0c0c0; }
+.final-pos-badge.top-3 { color: #cd7f32; }
+
+.final-ranking-pts {
+  text-align: right;
+}
+
+.final-ranking-pts strong {
+  display: block;
+  color: var(--color-lime);
+  font-size: 1.3rem;
+}
+
+.final-ranking-pts small {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
