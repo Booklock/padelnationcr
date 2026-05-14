@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { combineDateTime } from "../utils/formatters";
 import "./CreateEvent.css";
@@ -52,6 +53,7 @@ function buildInitialRules(playerLimit) {
 
 function CreateEvent() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     title:              "",
@@ -139,31 +141,28 @@ function CreateEvent() {
       if (seasonErr) throw seasonErr;
       if (!season) throw new Error("No hay temporada activa. Creá una en el panel de Supabase.");
 
-      // 2. Categoría (opcional)
-      const { data: cat } = await supabase
-        .from("categories").select("id").eq("code", formData.category).maybeSingle();
-
-      // 3. Timestamp de inicio
+      // 2. Timestamp de inicio
       const starts_at = combineDateTime(formData.date, formData.time);
 
-      // 4. Insertar evento
+      // 3. Insertar evento (columnas del schema 0001 + location de 0003)
       const { data: newEvent, error: eventErr } = await supabase
         .from("events")
         .insert({
           season_id:           season.id,
+          created_by:          user.id,
           title:               formData.title.trim(),
           format:              formData.format.toLowerCase(),
-          category_id:         cat?.id ?? null,
           category_code:       formData.category,
+          allowed_levels:      CATEGORY_LEVELS[formData.category] ?? [],
           starts_at,
           location:            formData.location.trim() || null,
           player_limit:        Number(formData.playerLimit),
           courts:              Number(formData.courts),
-          rounds_planned:      formData.format === "Reto" ? 1 : Number(formData.rounds),
+          rounds:              formData.format === "Reto" ? 1 : Number(formData.rounds),
           match_end_criterion: formData.matchEndCriterion,
           match_end_value:     Number(formData.matchEndValue),
-          price:               Number(formData.price),
-          description:         formData.prize.trim() || null,
+          price_crc:           Number(formData.price),
+          prize_description:   formData.prize.trim() || null,
           status:              "open",
         })
         .select().single();

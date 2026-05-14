@@ -22,7 +22,7 @@ function useAdminStats() {
           .eq("status", "pending"),
         supabase
           .from("seasons")
-          .select("year")
+          .select("name")
           .eq("is_active", true)
           .maybeSingle(),
       ]);
@@ -30,7 +30,7 @@ function useAdminStats() {
       setStats({
         players:        playersRes.count  ?? 0,
         pendingMatches: matchesRes.count  ?? 0,
-        season:         seasonRes.data?.year ?? "—",
+        season:         seasonRes.data?.name ?? "—",
       });
     }
     load();
