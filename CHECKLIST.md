@@ -20,11 +20,11 @@
 ## 🟠 P2 — Reglas del negocio
 
 - [x] **2.1 Empates en pozos**: matches pueden terminar empatados. Al cerrar el evento desempatar: wins → empates → head-to-head diff
-- [ ] **2.2 Criterio de fin de partido**: selector `tiempo` / `games` / `puntos` + valor objetivo en CreateEvent
+- [x] **2.2 Criterio de fin de partido**: selector `tiempo` / `games` / `puntos` + valor objetivo en CreateEvent
 - [ ] **2.3 Historial de pozos**: vista de resultados anteriores filtrable + sección en perfil
 - [x] **2.4 Inscripciones + Waitlist**: estados `confirmed`/`waitlist`/`cancelled`, promoción automática al cancelar
 - [ ] **2.5 Cancelar evento programable**: fecha límite + botón manual + trigger automático
-- [ ] **2.6 Puntos por posición configurables**: tabla editable en CreateEvent. Aplicar al cerrar evento
+- [x] **2.6 Puntos por posición configurables**: tabla editable en CreateEvent. Aplicar al cerrar evento
 - [ ] **2.7 Retos con apuesta**: validación 5-de-diferencia, flujo retar → aceptar/rechazar → jugar → transferir puntos
 - [ ] **2.8 Ranking de parejas fijas**: pestaña en `/ranking`. Invitación mutua → pareja activa → ranking propio
 - [ ] **2.9 Cambio de categoría manual por admin**: panel para mover jugadores. Eliminar barra de progreso en `PlayerProfile.jsx`
@@ -57,4 +57,4 @@
 
 ---
 
-**Progreso:** 12 / 37 ítems completos (32.4%)
+**Progreso:** 14 / 37 ítems completos (37.8%)

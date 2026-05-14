@@ -253,6 +253,91 @@
   color: var(--color-lime);
 }
 
+/* ── Criterio de fin de partido hint ── */
+.criterion-hint {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.criterion-hint strong {
+  color: var(--color-white);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.criterion-hint p {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ── Texto de ayuda genérico ── */
+.form-hint {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.form-hint strong {
+  color: var(--color-white);
+}
+
+/* ── Tabla de puntos por posición ── */
+.points-table {
+  display: grid;
+  gap: 8px;
+}
+
+.points-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 48px;
+  gap: 12px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.points-pos-badge {
+  font-weight: 950;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.points-pos-badge.pos-top-1 { color: #ffd700; }
+.points-pos-badge.pos-top-2 { color: #c0c0c0; }
+.points-pos-badge.pos-top-3 { color: #cd7f32; }
+
+.points-input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-carbon);
+  color: var(--color-white);
+  padding: 10px 12px;
+  font-weight: 900;
+  text-align: center;
+  outline: none;
+}
+
+.points-input:focus {
+  border-color: rgba(220, 251, 0, 0.68);
+  box-shadow: 0 0 0 3px rgba(220, 251, 0, 0.12);
+}
+
+.points-unit {
+  color: var(--color-lime);
+  font-weight: 900;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
 @media (max-width: 1080px) {
   .create-event-layout,
   .create-event-hero {
