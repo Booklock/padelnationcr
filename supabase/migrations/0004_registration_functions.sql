@@ -20,7 +20,7 @@ declare
   v_event        events%rowtype;
   v_existing     event_registrations%rowtype;
   v_confirmed_ct integer;
-  v_reg_status   event_registration_status;
+  v_reg_status   registration_status;
   v_waitlist_pos integer := null;
   v_reg_id       uuid;
 begin
