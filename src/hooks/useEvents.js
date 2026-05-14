@@ -75,6 +75,71 @@ export function useEvent(eventId) {
   return { event, pointRules, loading, error };
 }
 
+/** Obtiene eventos finalizados con filtros opcionales de categoría y formato. */
+export function useFinishedEvents({ category, format } = {}) {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    let query = supabase
+      .from("v_events_list")
+      .select("*")
+      .eq("status", "finished")
+      .order("starts_at", { ascending: false });
+
+    if (category && category !== "Todos") {
+      query = query.eq("category_code", category);
+    }
+    if (format && format !== "Todos") {
+      query = query.eq("format", format.toLowerCase());
+    }
+
+    const { data, error: fetchError } = await query;
+    if (fetchError) setError(fetchError);
+    else setEvents(data ?? []);
+    setLoading(false);
+  }, [category, format]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  return { events, loading, error, refetch: fetchEvents };
+}
+
+/** Obtiene los resultados finales (posiciones) de un evento específico. */
+export function useEventFinalResults(eventId) {
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!eventId) {
+      setResults([]);
+      return;
+    }
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      const { data } = await supabase
+        .from("player_event_results")
+        .select("player_id, final_position, points_earned, wins, ties, losses, profiles(full_name, current_level, current_category)")
+        .eq("event_id", eventId)
+        .not("final_position", "is", null)
+        .order("final_position", { ascending: true });
+      if (!cancelled) {
+        setResults(data ?? []);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [eventId]);
+
+  return { results, loading };
+}
+
 /** Obtiene los jugadores registrados (confirmados) de un evento. */
 export function useEventPlayers(eventId) {
   const [players, setPlayers] = useState([]);

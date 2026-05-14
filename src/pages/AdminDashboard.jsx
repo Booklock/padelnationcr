@@ -215,6 +215,9 @@ function AdminDashboard() {
                 <Link className="quick-action" to="/eventos">
                   Ver todos los eventos
                 </Link>
+                <Link className="quick-action" to="/historial">
+                  Historial de pozos
+                </Link>
               </div>
             </aside>
 

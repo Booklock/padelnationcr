@@ -38,8 +38,7 @@ export function useProfile() {
           .from("player_event_results")
           .select("id, final_position, points_earned, wins, ties, losses, excluded, events(id, title, starts_at, format, category_code)")
           .eq("player_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(15),
+          .order("created_at", { ascending: false }),
 
         // Posición en ranking
         supabase

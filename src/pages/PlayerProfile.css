@@ -156,14 +156,20 @@
 }
 
 .history-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 14px;
   align-items: center;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 16px;
+}
+
+.history-pos {
+  font-size: 1.2rem;
+  text-align: center;
+  line-height: 1;
 }
 
 .history-item small {
@@ -172,10 +178,11 @@
   margin-top: 5px;
 }
 
-.history-item span {
+.history-item > span:last-child {
   color: var(--color-lime);
   font-weight: 950;
   white-space: nowrap;
+  text-align: right;
 }
 
 .profile-events-list {

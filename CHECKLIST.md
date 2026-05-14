@@ -21,7 +21,7 @@
 
 - [x] **2.1 Empates en pozos**: matches pueden terminar empatados. Al cerrar el evento desempatar: wins → empates → head-to-head diff
 - [x] **2.2 Criterio de fin de partido**: selector `tiempo` / `games` / `puntos` + valor objetivo en CreateEvent
-- [ ] **2.3 Historial de pozos**: vista de resultados anteriores filtrable + sección en perfil
+- [x] **2.3 Historial de pozos**: vista de resultados anteriores filtrable + sección en perfil
 - [x] **2.4 Inscripciones + Waitlist**: estados `confirmed`/`waitlist`/`cancelled`, promoción automática al cancelar
 - [ ] **2.5 Cancelar evento programable**: fecha límite + botón manual + trigger automático
 - [x] **2.6 Puntos por posición configurables**: tabla editable en CreateEvent. Aplicar al cerrar evento
@@ -57,4 +57,4 @@
 
 ---
 
-**Progreso:** 14 / 37 ítems completos (37.8%)
+**Progreso:** 15 / 37 ítems completos (40.5%)

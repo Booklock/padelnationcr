@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useProfile } from "../hooks/useProfile";
 import { formatEventDate, formatEventTime, FORMAT_LABELS, STATUS_LABELS, getInitials } from "../utils/formatters";
@@ -35,7 +36,7 @@ function PlayerProfile() {
     (r) => r.events?.status !== "finished" && r.events?.status !== "cancelled"
   );
 
-  const recentResults = results.slice(0, 5);
+  const POSITION_MEDALS = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
   return (
     <main className="section profile-page">
@@ -91,21 +92,29 @@ function PlayerProfile() {
         <section className="profile-main-grid">
           <div className="profile-left-column">
 
-            {/* Historial reciente */}
+            {/* Historial de eventos */}
             <article className="card profile-panel">
               <div className="panel-header">
                 <div>
                   <p className="section-kicker">Historial</p>
-                  <h2>Actividad reciente</h2>
+                  <h2>Mis eventos</h2>
                 </div>
+                <Link className="btn btn-secondary" to="/historial">
+                  Ver todo
+                </Link>
               </div>
 
-              {recentResults.length === 0 ? (
+              {results.length === 0 ? (
                 <p className="profile-empty">Aún no hay resultados registrados.</p>
               ) : (
                 <div className="history-list">
-                  {recentResults.map((item) => (
+                  {results.map((item) => (
                     <div className="history-item" key={item.id}>
+                      <span className="history-pos">
+                        {item.final_position
+                          ? (POSITION_MEDALS[item.final_position] ?? `#${item.final_position}`)
+                          : "—"}
+                      </span>
                       <div>
                         <strong>{item.events?.title ?? "Evento"}</strong>
                         <small>

@@ -40,6 +40,9 @@ function Navbar() {
           <Link to="/ranking" onClick={closeMenu}>
             Ranking
           </Link>
+          <Link to="/historial" onClick={closeMenu}>
+            Historial
+          </Link>
 
           {user && (
             <Link to="/perfil" onClick={closeMenu}>

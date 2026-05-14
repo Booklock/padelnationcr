@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import EventCoordinator from "./pages/EventCoordinator";
 import CreateEvent from "./pages/CreateEvent";
 import Unauthorized from "./pages/Unauthorized";
+import EventHistory from "./pages/EventHistory";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/ranking" element={<Ranking />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Register />} />
+            <Route path="/historial" element={<EventHistory />} />
             <Route path="/no-autorizado" element={<Unauthorized />} />
 
             <Route
