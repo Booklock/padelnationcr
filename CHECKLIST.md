@@ -57,4 +57,75 @@
 
 ---
 
+## 🔵 QA — Manual de pruebas (ejecutar antes de cada release)
+
+> Ejecutar en el sitio de Netlify, no en localhost. Marcar ✅ al aprobar, ❌ si falla.
+
+### Auth
+- [ ] **Registro** — completar formulario con datos válidos → llega email de confirmación con contenido
+- [ ] **Contraseña débil** — ingresar "abc" → aparece mensaje de error de validación (no envía)
+- [ ] **Confirmar email** — click en link del email → puede ingresar al sitio
+- [ ] **Login correcto** — credenciales válidas → navbar muestra nombre del jugador + botón "Salir"
+- [ ] **Login incorrecto** — contraseña mala → aparece mensaje de error
+- [ ] **Cerrar sesión** → redirige y ya no muestra nombre en navbar
+
+### Navegación general
+- [ ] **URL directa `/historial`** — no da 404, carga la página
+- [ ] **URL directa `/ranking`** — no da 404, carga la página
+- [ ] **URL directa `/eventos`** — no da 404, carga la página
+- [ ] **URL directa `/perfil`** — redirige a `/login` si no hay sesión
+- [ ] **Navbar mobile** — en pantalla pequeña aparece ícono hamburguesa y abre menú
+
+### Página de Eventos (`/eventos`)
+- [ ] Carga sin errores, lista eventos activos con fecha, categoría y cupo
+- [ ] Filtros de categoría y formato actualizan la lista en tiempo real
+- [ ] Sin sesión → click "Inscribirme" redirige a `/login`
+- [ ] Con sesión → inscripción exitosa muestra badge verde **✓ Inscrito**
+- [ ] Cancelar inscripción → badge desaparece, cupo se libera
+- [ ] Evento lleno → botón cambia a **"Evento cerrado"** deshabilitado o muestra **Lista de espera #N**
+
+### Historial (`/historial`)
+- [ ] Carga lista de eventos con status `finished`, más recientes primero
+- [ ] Filtros de categoría y formato funcionan
+- [ ] Click en evento → se expande el leaderboard inline
+- [ ] Top 3 muestran 🥇🥈🥉 y fondo diferenciado (dorado/plata/bronce)
+- [ ] Click nuevamente → se contrae
+- [ ] Evento sin posiciones finales → mensaje "No hay posiciones finales registradas"
+
+### Perfil (`/perfil`)
+- [ ] Muestra nombre, categoría y nivel actual
+- [ ] Stats correctas: puntos de temporada, eventos jugados, win rate
+- [ ] Sección "Mis eventos" muestra historial con emoji de posición por evento
+- [ ] Botón "Ver todo" lleva a `/historial`
+- [ ] Próximos eventos muestra inscripciones activas
+
+### Ranking (`/ranking`)
+- [ ] Tabla carga con posición, nombre, puntos y eventos jugados
+- [ ] Jugador en sesión aparece destacado (si tiene resultados)
+
+### Admin — Crear evento (`/admin/crear-evento`)
+- [ ] Formulario carga sin errores
+- [ ] Selector **Criterio de fin** (tiempo/juegos/puntos) cambia la etiqueta del campo y el hint
+- [ ] Tabla de **puntos por posición** es editable; cambia cantidad de filas al cambiar cupo
+- [ ] Preview lateral se actualiza en tiempo real con los datos ingresados
+- [ ] Guardar → redirige al coordinador del evento recién creado
+- [ ] El evento aparece en `/eventos` con estado "Abierto"
+
+### Admin — Coordinador de evento (`/admin/evento/:id`)
+- [ ] Carga nombre del evento, jugadores confirmados y tabla de posiciones
+- [ ] Botón **"Generar ronda 1"** genera partidos con jugadores correctamente asignados
+- [ ] Se pueden ingresar resultados en los campos de score
+- [ ] **Guardar partido** → standing actualiza W/T/P y puntos
+- [ ] Al completar todos los partidos de la ronda → aparece botón "Generar ronda 2"
+- [ ] Al completar todas las rondas → aparece sección **"Finalizar evento"** con posiciones
+- [ ] **Finalizar** → estado pasa a "Finalizado", jugadores ganan puntos de ranking
+- [ ] Evento finalizado aparece en `/historial` con leaderboard completo
+
+### Admin — Dashboard (`/admin`)
+- [ ] Stats muestran: eventos activos, jugadores registrados, partidos pendientes, temporada
+- [ ] Carrusel muestra eventos activos con navegación ← →
+- [ ] Acciones rápidas: links a crear evento, ranking, historial funcionan
+
+---
+
 **Progreso:** 15 / 37 ítems completos (40.5%)
