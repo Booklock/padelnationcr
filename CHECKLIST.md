@@ -25,16 +25,17 @@
 - [x] **2.4 Inscripciones + Waitlist**: estados `confirmed`/`waitlist`/`cancelled`, promoción automática al cancelar
 - [x] **2.5 Cancelar evento programable**: botón manual en coordinador + cancela inscripciones + banner de estado
 - [x] **2.6 Puntos por posición configurables**: tabla editable en CreateEvent. Aplicar al cerrar evento
-- [ ] **2.7 Retos con apuesta**: validación 5-de-diferencia, flujo retar → aceptar/rechazar → jugar → transferir puntos
-- [ ] **2.8 Ranking de parejas fijas**: pestaña en `/ranking`. Invitación mutua → pareja activa → ranking propio
-- [ ] **2.9 Cambio de categoría manual por admin**: panel para mover jugadores. Eliminar barra de progreso en `PlayerProfile.jsx`
-- [ ] **2.10 Autorización a categoría superior**: admin marca jugador como autorizado (puntual o por tiempo)
-- [ ] **2.11 Excluir resultados del ranking**: sistema sugiere los peores N, admin confirma
-- [ ] **2.12 Notificaciones MVP**: email de confirmación al inscribirse + recordatorio pre-evento
+- [x] **2.7 Retos con apuesta (parejas)**: validación 5-de-diferencia, flujo retar → aceptar/rechazar → admin resuelve → transferir puntos. Notificación in-app a admins. Solo aplica a ranking de parejas
+- [x] **2.8 Ranking de parejas fijas**: pestaña en `/ranking`. Invitación mutua → pareja activa → ranking propio con puntos de eventos + retos
+- [ ] **2.7b Retos individuales**: ⏳ Pendiente alineación con dueño — definir reglas de elegibilidad entre categorías antes de implementar
+- [x] **2.9 Cambio de categoría manual por admin**: panel para mover jugadores. Registro en `player_category_history`. Categoría + nivel + teléfono + género en registro
+- [x] **2.10 Autorización a categoría superior**: panel `/admin/autorizaciones` — otorgar (puntual por evento o por fecha de vencimiento), revocar. Backend ya validado en `register_for_event`
+- [x] **2.11 Excluir resultados del ranking**: panel `/admin/exclusiones` — sistema sugiere peores N (≥4 eventos→1, ≥8→2), admin confirma/revoca por jugador
+- [x] **2.12 Notificaciones MVP**: recordatorios automáticos 12h y 1h antes del evento via Edge Function + GitHub Actions cron
 
 ## 🟡 P3 — Calidad y robustez
 
-- [ ] **3.1 Validación servidor** (doble inscripción, categoría incorrecta, reto duplicado)
+- [x] **3.1 Validación servidor**: doble inscripción, categoría/nivel incorrecto (con soporte de autorizaciones especiales), reto duplicado — todo en server-side. Frontend muestra "Categoría no compatible" preventivamente
 - [ ] **3.2 Auditoría** (registrar cambios sensibles en `audit_log`)
 - [ ] **3.3 Loading + error states** en todas las páginas
 - [ ] **3.4 Tests** para lógica de puntos, retos, waitlist y reglas de desempate
@@ -128,4 +129,4 @@
 
 ---
 
-**Progreso:** 16 / 37 ítems completos (43.2%)
+**Progreso:** 23 / 39 ítems completos (59.0%)

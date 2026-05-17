@@ -11,7 +11,7 @@ const FORMATS    = ["Todos", "Mexicano", "Americano", "Reto", "Torneo"];
 
 function Events() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [selectedFormat,   setSelectedFormat]   = useState("Todos");
@@ -33,6 +33,16 @@ function Events() {
     () => events.filter((e) => e.status === "open" || e.status === "almost_full").length,
     [events]
   );
+
+  /* ── Elegibilidad de categoría (cliente) ─────────────────── */
+  // Devuelve true si el jugador logueado puede inscribirse según su nivel.
+  // Las autorizaciones especiales se validan solo en el servidor; acá
+  // simplemente evitamos el click para el caso común.
+  function isEligible(event) {
+    if (!user || !profile) return true; // sin sesión → redirigir al login, no bloquear
+    if (!profile.current_level)  return false; // sin nivel asignado → no elegible
+    return (event.allowed_levels ?? []).includes(profile.current_level);
+  }
 
   /* ── Handlers ────────────────────────────────────────────── */
 
@@ -187,9 +197,10 @@ function Events() {
                 const statusLabel = STATUS_LABELS[event.status] ?? event.status;
                 const statusClass = STATUS_CLASS[event.status] ?? "";
 
-                const myReg   = regs[event.id] ?? null;
-                const isBusy  = actionEventId === event.id;
-                const msg     = actionMsgs[event.id] ?? null;
+                const myReg    = regs[event.id] ?? null;
+                const isBusy   = actionEventId === event.id;
+                const msg      = actionMsgs[event.id] ?? null;
+                const eligible = isEligible(event);
 
                 return (
                   <article className="event-page-card card" key={event.id}>
@@ -273,8 +284,20 @@ function Events() {
                         </button>
                       </div>
 
+                    ) : !eligible && user ? (
+                      /* Jugador logueado pero categoría incorrecta */
+                      <div className="reg-action-area">
+                        <div className="reg-not-eligible">
+                          <span>⚠️ Categoría no compatible</span>
+                          <small>
+                            Tu nivel ({profile?.current_level ?? "sin asignar"}) no está en los
+                            niveles habilitados para este evento.
+                          </small>
+                        </div>
+                      </div>
+
                     ) : (
-                      /* Jugador no inscrito */
+                      /* Jugador no inscrito (o sin sesión) */
                       <div className="reg-action-area">
                         <button
                           className="btn btn-primary event-register-btn"

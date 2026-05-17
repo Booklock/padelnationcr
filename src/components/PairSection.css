@@ -1,0 +1,316 @@
+.pair-section {
+  padding: 24px;
+}
+
+.pair-section h2 {
+  margin: 4px 0 18px;
+}
+
+.pair-loading {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Pareja activa ── */
+.pair-active-card {
+  background: rgba(220, 251, 0, 0.06);
+  border: 1px solid rgba(220, 251, 0, 0.22);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.pair-active-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pair-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pair-badge-active {
+  background: rgba(220, 251, 0, 0.18);
+  color: var(--color-lime);
+}
+
+.pair-pts {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.pair-name {
+  font-size: 1.15rem;
+  margin: 0;
+  color: var(--color-white);
+}
+
+.pair-partner {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.pair-partner-cat {
+  opacity: 0.7;
+}
+
+.btn-dissolve {
+  margin-top: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background: transparent;
+  color: #ff6b6b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+  align-self: flex-start;
+}
+
+.btn-dissolve:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+/* ── Invite form ── */
+.pair-invite-form {
+  display: grid;
+  gap: 14px;
+}
+
+.pair-hint {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.pair-search-wrap {
+  position: relative;
+}
+
+.pair-search-input,
+.pair-name-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.pair-search-input::placeholder,
+.pair-name-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.pair-search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--color-surface, #1a1a2e);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  list-style: none;
+  margin: 0; padding: 6px 0;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.pair-search-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  transition: background 0.1s;
+}
+
+.pair-search-item:hover {
+  background: rgba(220, 251, 0, 0.08);
+}
+
+.pair-search-item strong {
+  font-size: 0.9rem;
+}
+
+.pair-search-item small {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.pair-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--color-lime);
+}
+
+.pair-clear-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.1s;
+}
+
+.pair-clear-btn:hover {
+  color: var(--color-white);
+}
+
+.pair-invite-btn {
+  justify-self: start;
+}
+
+/* ── Pending invites ── */
+.pair-invites-section,
+.pair-challenges-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 12px;
+}
+
+.pair-sub-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.pair-invite-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.pair-invite-card p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.pair-invite-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.pair-invite-btns .btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+/* ── Challenge cards ── */
+.pair-challenge-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.pair-challenge-card.received {
+  border-color: rgba(99, 179, 237, 0.25);
+  background: rgba(99, 179, 237, 0.05);
+}
+
+.pair-challenge-card.sent {
+  border-color: rgba(220, 251, 0, 0.15);
+}
+
+.pair-ch-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.pair-ch-status {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pair-ch-status.status-pending  { color: #f6ad55; }
+.pair-ch-status.status-accepted { color: #9ae6b4; }
+
+.pair-ch-pts {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-lime);
+}
+
+.pair-ch-from {
+  font-size: 0.88rem;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.pair-ch-from strong {
+  color: var(--color-white);
+}
+
+.pair-ch-positions {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.pair-ch-msg {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.pair-ch-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pair-ch-btns .btn {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.pair-ch-note {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Messages ── */
+.pair-msg {
+  font-size: 0.85rem;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.pair-msg-ok  { color: var(--color-lime);   background: rgba(220,251,0,0.08); }
+.pair-msg-err { color: #ff6b6b; background: rgba(255,107,107,0.08); }
