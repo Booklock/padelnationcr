@@ -14,6 +14,9 @@ import EventCoordinator from "./pages/EventCoordinator";
 import CreateEvent from "./pages/CreateEvent";
 import Unauthorized from "./pages/Unauthorized";
 import EventHistory from "./pages/EventHistory";
+import AdminPlayers from "./pages/AdminPlayers";
+import AdminAuthorizations from "./pages/AdminAuthorizations";
+import AdminExclusions from "./pages/AdminExclusions";
 
 function App() {
   return (
@@ -63,6 +66,33 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                   <CreateEvent />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/jugadores"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminPlayers />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/autorizaciones"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminAuthorizations />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/exclusiones"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminExclusions />
                 </ProtectedRoute>
               }
             />

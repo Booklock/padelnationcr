@@ -1,3 +1,56 @@
+/* ── Register extended card ── */
+.register-card {
+  width: min(600px, 100%);
+}
+
+/* ── Form sections ── */
+.register-section {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+}
+
+.register-section-label {
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-lime);
+  margin: 0;
+}
+
+.register-section-hint {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: -4px 0 0;
+}
+
+.register-optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+/* ── 2-column grid inside sections ── */
+.register-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 540px) {
+  .register-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Success note ── */
 .register-success-note {
   background: rgba(220, 251, 0, 0.08);
   border: 1px solid rgba(220, 251, 0, 0.24);

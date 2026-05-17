@@ -1,0 +1,283 @@
+.admin-players-page {
+  min-height: calc(100vh - 78px);
+}
+
+/* ── Header ── */
+.ap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+/* ── Toast ── */
+.ap-toast {
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.ap-toast-ok {
+  background: rgba(220, 251, 0, 0.1);
+  border: 1px solid rgba(220, 251, 0, 0.3);
+  color: var(--color-lime);
+}
+
+/* ── Filters bar ── */
+.ap-filters {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.ap-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.95rem;
+}
+
+.ap-search::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ap-filter-select {
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.95rem;
+  min-width: 180px;
+}
+
+.ap-count {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* ── States ── */
+.ap-loading,
+.ap-empty {
+  padding: 36px 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* ── Table ── */
+.ap-table-wrap {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.ap-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ap-table thead th {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.ap-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.15s;
+}
+
+.ap-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ap-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ap-table td {
+  padding: 14px 18px;
+  vertical-align: middle;
+}
+
+/* Editing row highlight */
+.ap-row-editing {
+  background: rgba(220, 251, 0, 0.04) !important;
+  border-bottom: 1px solid rgba(220, 251, 0, 0.18) !important;
+}
+
+/* ── Cell content ── */
+.ap-player-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ap-email {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+.ap-phone {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.ap-gender {
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+.ap-level {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/* ── Category badge ── */
+.ap-cat-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-white);
+}
+
+.ap-cat-badge.cat-aa { background: rgba(220, 251, 0, 0.18); color: var(--color-lime); }
+.ap-cat-badge.cat-a  { background: rgba(99, 179, 237, 0.18); color: #63b3ed; }
+.ap-cat-badge.cat-b  { background: rgba(154, 230, 180, 0.18); color: #9ae6b4; }
+.ap-cat-badge.cat-c  { background: rgba(246, 173, 85, 0.18); color: #f6ad55; }
+.ap-cat-badge.cat-d  { background: rgba(252, 129, 74, 0.18); color: #fc814a; }
+
+/* ── Role badge ── */
+.ap-role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted);
+}
+
+.ap-role-badge.role-admin,
+.ap-role-badge.role-super_admin {
+  background: rgba(220, 251, 0, 0.14);
+  color: var(--color-lime);
+}
+
+.ap-role-badge.role-coordinator {
+  background: rgba(99, 179, 237, 0.14);
+  color: #63b3ed;
+}
+
+/* ── Edit button ── */
+.ap-edit-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-white);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+}
+
+.ap-edit-btn:hover {
+  background: rgba(220, 251, 0, 0.12);
+  color: var(--color-lime);
+  border-color: rgba(220, 251, 0, 0.3);
+}
+
+/* ── Inline edit controls ── */
+.ap-inline-select {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.9rem;
+}
+
+.ap-edit-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.ap-reason-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.88rem;
+}
+
+.ap-reason-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ap-save-error {
+  color: #ff6b6b;
+  font-size: 0.85rem;
+}
+
+.ap-edit-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.ap-save-btn,
+.ap-cancel-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.88rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .ap-header {
+    flex-direction: column;
+  }
+
+  .ap-table thead th:nth-child(3),
+  .ap-table tbody td:nth-child(3) {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ap-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ap-count {
+    margin-left: 0;
+  }
+}

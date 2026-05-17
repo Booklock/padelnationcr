@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useProfile } from "../hooks/useProfile";
+import { cancelRegistration } from "../hooks/useRegistration";
 import { formatEventDate, formatEventTime, FORMAT_LABELS, STATUS_LABELS, getInitials } from "../utils/formatters";
+import PairSection from "../components/PairSection";
 import "./PlayerProfile.css";
 
 function PlayerProfile() {
@@ -21,6 +24,9 @@ function PlayerProfile() {
   const displayName   = profile?.full_name  ?? "Jugador";
   const category      = profile?.current_category ?? "—";
   const level         = profile?.current_level    ?? "—";
+  const phone         = profile?.phone   ?? null;
+  const gender        = profile?.gender  ?? null;
+  const GENDER_LABELS = { male: "Masculino", female: "Femenino", unspecified: null };
   const totalPoints   = rankingInfo?.total_points   ?? 0;
   const rankingPos    = rankingInfo?.position       ?? "—";
   const eventsPlayed  = rankingInfo?.events_counted ?? 0;
@@ -37,6 +43,24 @@ function PlayerProfile() {
   );
 
   const POSITION_MEDALS = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
+  // Cancelar inscripción desde el perfil
+  const [cancellingId, setCancellingId] = useState(null);
+  const [cancelError,  setCancelError]  = useState(null);
+
+  async function handleLeaveEvent(eventId) {
+    if (!window.confirm("¿Querés salir de este evento? Si hay alguien en lista de espera pasará automáticamente.")) return;
+    setCancellingId(eventId);
+    setCancelError(null);
+    try {
+      await cancelRegistration(eventId);
+      await refetch();
+    } catch (err) {
+      setCancelError(err.message);
+    } finally {
+      setCancellingId(null);
+    }
+  }
 
   return (
     <main className="section profile-page">
@@ -62,6 +86,16 @@ function PlayerProfile() {
             <small style={{ marginTop: 6, opacity: 0.7 }}>
               Los cambios de nivel los decide el administrador.
             </small>
+            {(phone || (gender && GENDER_LABELS[gender])) && (
+              <div className="profile-contact-info">
+                {phone && <small>📱 {phone}</small>}
+                {gender && GENDER_LABELS[gender] && (
+                  <small>
+                    {gender === "male" ? "♂" : "♀"} {GENDER_LABELS[gender]}
+                  </small>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
@@ -143,15 +177,27 @@ function PlayerProfile() {
                 </div>
               </div>
 
+              {cancelError && <p className="reg-error" style={{ marginBottom: 12 }}>{cancelError}</p>}
+
               {upcomingRegs.length === 0 ? (
                 <p className="profile-empty">No tenés eventos próximos.</p>
               ) : (
                 <div className="profile-events-list">
                   {upcomingRegs.map((reg) => (
                     <div className="profile-event-card" key={reg.id}>
-                      <span className="badge">
-                        {reg.status === "waitlist" ? "Lista de espera" : STATUS_LABELS[reg.events?.status] ?? "Confirmado"}
-                      </span>
+                      <div className="profile-event-card-top">
+                        <span className={`badge ${reg.status === "waitlist" ? "badge-waitlist" : ""}`}>
+                          {reg.status === "waitlist" ? `Lista de espera` : STATUS_LABELS[reg.events?.status] ?? "Confirmado"}
+                        </span>
+                        <button
+                          className="profile-leave-btn"
+                          onClick={() => handleLeaveEvent(reg.events?.id)}
+                          disabled={cancellingId === reg.events?.id}
+                          title="Salir del evento"
+                        >
+                          {cancellingId === reg.events?.id ? "…" : "Salir"}
+                        </button>
+                      </div>
                       <h3>{reg.events?.title ?? "Evento"}</h3>
                       <p>{formatEventDate(reg.events?.starts_at)} · {formatEventTime(reg.events?.starts_at)}</p>
                       {reg.events?.location && <small>{reg.events.location}</small>}
@@ -172,6 +218,10 @@ function PlayerProfile() {
             </article>
           </aside>
         </section>
+
+        {/* Pareja fija + retos */}
+        <PairSection />
+
       </div>
     </main>
   );

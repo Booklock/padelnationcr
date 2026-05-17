@@ -320,6 +320,28 @@
   text-align: center;
 }
 
+.reg-not-eligible {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(246, 173, 85, 0.08);
+  border: 1px solid rgba(246, 173, 85, 0.25);
+  text-align: center;
+}
+
+.reg-not-eligible span {
+  color: #f6ad55;
+  font-weight: 800;
+  font-size: 0.88rem;
+}
+
+.reg-not-eligible small {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .empty-state {
   padding: 32px;
 }

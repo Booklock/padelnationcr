@@ -70,6 +70,15 @@
   margin: 10px 0;
 }
 
+.profile-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 .profile-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -197,8 +206,43 @@
   padding: 18px;
 }
 
+.profile-event-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge-waitlist {
+  background: rgba(255, 200, 60, 0.12);
+  color: #ffc83c;
+  border: 1px solid rgba(255, 200, 60, 0.3);
+}
+
+.profile-leave-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  color: #ff6b6b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.profile-leave-btn:hover:not(:disabled) {
+  background: rgba(255, 80, 80, 0.1);
+}
+
+.profile-leave-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .profile-event-card h3 {
-  margin: 16px 0 8px;
+  margin: 12px 0 8px;
 }
 
 .profile-event-card p,

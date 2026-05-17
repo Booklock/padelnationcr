@@ -1,0 +1,44 @@
+# =====================================================================
+# Padel Nation CR — Recordatorios de eventos
+# =====================================================================
+# Llama la Edge Function send-event-reminders cada hora.
+# La función envía emails a jugadores inscritos 12h y 1h antes del evento.
+#
+# Secrets requeridos en GitHub (Settings → Secrets → Actions):
+#   SUPABASE_FUNCTION_URL  → https://<project-ref>.supabase.co/functions/v1/send-event-reminders
+#   CRON_SECRET            → mismo valor que configuraste en Supabase Edge Function Secrets
+# =====================================================================
+
+name: Recordatorios de eventos
+
+on:
+  schedule:
+    # Cada hora en punto (UTC). Supabase Edge Functions corren en UTC.
+    - cron: "0 * * * *"
+  # Permite ejecutar manualmente desde GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  send-reminders:
+    name: Enviar recordatorios
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Llamar Edge Function
+        run: |
+          HTTP_STATUS=$(curl --silent --output /tmp/response.json \
+            --write-out "%{http_code}" \
+            --max-time 30 \
+            -X POST "${{ secrets.SUPABASE_FUNCTION_URL }}" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Response:"
+          cat /tmp/response.json
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Error: la función retornó HTTP $HTTP_STATUS"
+            exit 1
+          fi
