@@ -23,7 +23,7 @@
 - [x] **2.2 Criterio de fin de partido**: selector `tiempo` / `games` / `puntos` + valor objetivo en CreateEvent
 - [x] **2.3 Historial de pozos**: vista de resultados anteriores filtrable + sección en perfil
 - [x] **2.4 Inscripciones + Waitlist**: estados `confirmed`/`waitlist`/`cancelled`, promoción automática al cancelar
-- [ ] **2.5 Cancelar evento programable**: fecha límite + botón manual + trigger automático
+- [x] **2.5 Cancelar evento programable**: botón manual en coordinador + cancela inscripciones + banner de estado
 - [x] **2.6 Puntos por posición configurables**: tabla editable en CreateEvent. Aplicar al cerrar evento
 - [ ] **2.7 Retos con apuesta**: validación 5-de-diferencia, flujo retar → aceptar/rechazar → jugar → transferir puntos
 - [ ] **2.8 Ranking de parejas fijas**: pestaña en `/ranking`. Invitación mutua → pareja activa → ranking propio
@@ -128,4 +128,4 @@
 
 ---
 
-**Progreso:** 15 / 37 ítems completos (40.5%)
+**Progreso:** 16 / 37 ítems completos (43.2%)

@@ -104,6 +104,7 @@ function EventCoordinator() {
   const [initialized,  setInitialized]  = useState(false);
   const [saving,       setSaving]       = useState(false);
   const [finalizing,   setFinalizing]   = useState(false);
+  const [cancelling,   setCancelling]   = useState(false);
 
   /* ── Mapa posición → puntos de ranking ─────────────────── */
   const pointsMap = useMemo(() => {
@@ -239,6 +240,32 @@ function EventCoordinator() {
     setMatches(generateMexicanoRound(sortedPlayers, nextRound));
   }
 
+  /* ── Cancelar evento ───────────────────────────────────── */
+  async function handleCancelEvent() {
+    const confirmed = window.confirm(
+      "¿Cancelar este evento?\n\nTodas las inscripciones activas serán canceladas. Esta acción no se puede deshacer."
+    );
+    if (!confirmed) return;
+
+    const reason = window.prompt("Motivo de cancelación (opcional):");
+    if (reason === null) return; // el admin presionó "Cancelar" en el prompt
+
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase.rpc("cancel_event", {
+        p_event_id: id,
+        p_reason:   reason.trim() || null,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      navigate("/admin");
+    } catch (err) {
+      alert("Error al cancelar el evento: " + err.message);
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   /* ── Finalizar evento ───────────────────────────────────── */
   async function handleFinalizeEvent() {
     if (!window.confirm(
@@ -313,6 +340,8 @@ function EventCoordinator() {
   const allCurrentSaved  = matches.length > 0 && matches.every((m) => m.isSaved);
   const hasHistory       = matchHistory.length > 0;
   const isFinished       = event.status === "finished";
+  const isCancelled      = event.status === "cancelled";
+  const isLocked         = isFinished || isCancelled;
 
   /* ── Render ─────────────────────────────────────────────── */
   return (
@@ -341,10 +370,32 @@ function EventCoordinator() {
               {event.players_registered}/{event.player_limit} jugadores
               {event.courts ? ` · ${event.courts} canchas` : ""}
             </small>
+
+            {!isLocked && (
+              <button
+                className="btn btn-danger"
+                onClick={handleCancelEvent}
+                disabled={cancelling}
+                style={{ marginTop: 12 }}
+              >
+                {cancelling ? "Cancelando…" : "Cancelar evento"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Evento ya finalizado */}
+        {/* Evento cancelado */}
+        {isCancelled && (
+          <div className="event-cancelled-banner card">
+            <strong>✗ Evento cancelado</strong>
+            <p>
+              Este evento fue cancelado.
+              {event.cancellation_reason && ` Motivo: ${event.cancellation_reason}`}
+            </p>
+          </div>
+        )}
+
+        {/* Evento finalizado */}
         {isFinished && (
           <div className="event-finished-banner card">
             <strong>✓ Evento finalizado</strong>
@@ -365,7 +416,7 @@ function EventCoordinator() {
               <button
                 className="btn btn-primary"
                 onClick={handleGenerateNextRound}
-                disabled={saving || isFinished}
+                disabled={saving || isLocked}
               >
                 Siguiente ronda
               </button>
@@ -402,7 +453,7 @@ function EventCoordinator() {
                         <input
                           type="number" min="0" placeholder="0"
                           value={match.teamAScore}
-                          disabled={match.isSaved || saving || isFinished}
+                          disabled={match.isSaved || saving || isLocked}
                           onChange={(e) => handleScoreChange(match.id, "teamAScore", e.target.value)}
                         />
                       </div>
@@ -417,7 +468,7 @@ function EventCoordinator() {
                         <input
                           type="number" min="0" placeholder="0"
                           value={match.teamBScore}
-                          disabled={match.isSaved || saving || isFinished}
+                          disabled={match.isSaved || saving || isLocked}
                           onChange={(e) => handleScoreChange(match.id, "teamBScore", e.target.value)}
                         />
                       </div>
@@ -428,7 +479,7 @@ function EventCoordinator() {
                         <button
                           className="btn btn-secondary match-save"
                           onClick={() => handleEditResult(match.id)}
-                          disabled={saving || isFinished}
+                          disabled={saving || isLocked}
                         >
                           Editar resultado
                         </button>
@@ -483,7 +534,7 @@ function EventCoordinator() {
         </div>
 
         {/* ── Sección finalizar evento ─────────────────────── */}
-        {!isFinished && hasHistory && allCurrentSaved && (
+        {!isLocked && hasHistory && allCurrentSaved && (
           <section className="card coordinator-panel finalize-section">
             <div className="panel-header">
               <div>
