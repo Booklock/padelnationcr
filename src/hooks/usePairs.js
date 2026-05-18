@@ -134,22 +134,27 @@ export function usePairs() {
 export function usePairsRanking() {
   const [pairs,   setPairs]   = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const { data } = await supabase
+      const { data, error: dbErr } = await supabase
         .from("v_ranking_pairs")
         .select("*")
         .order("position", { ascending: true });
 
+      if (dbErr) throw dbErr;
       if (!data || data.length === 0) { setPairs([]); return; }
 
       const playerIds = [...new Set(data.flatMap((p) => [p.player_a_id, p.player_b_id]))];
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profErr } = await supabase
         .from("profiles")
         .select("id, full_name, current_category, current_level")
         .in("id", playerIds);
+
+      if (profErr) throw profErr;
 
       const pm = Object.fromEntries((profiles ?? []).map((p) => [p.id, p]));
 
@@ -164,6 +169,7 @@ export function usePairsRanking() {
       })));
     } catch (err) {
       console.error("usePairsRanking:", err);
+      setError(err.message ?? "Error al cargar el ranking de parejas.");
     } finally {
       setLoading(false);
     }
@@ -171,7 +177,7 @@ export function usePairsRanking() {
 
   useEffect(() => { load(); }, [load]);
 
-  return { pairs, loading, refetch: load };
+  return { pairs, loading, error, refetch: load };
 }
 
 // ── usePendingChallenges: para el admin dashboard ─────────────────────

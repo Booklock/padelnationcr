@@ -1,0 +1,52 @@
+.eb-page {
+  min-height: calc(100vh - 78px);
+  display: flex;
+  align-items: center;
+}
+
+.eb-content {
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.eb-icon {
+  display: block;
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+}
+
+.eb-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.eb-details {
+  margin-top: 32px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+}
+
+.eb-details summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  margin-bottom: 10px;
+  user-select: none;
+}
+
+.eb-details pre {
+  font-size: 0.78rem;
+  color: #ff6b6b;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  line-height: 1.6;
+}

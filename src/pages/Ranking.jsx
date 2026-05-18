@@ -139,7 +139,7 @@ function IndividualTab() {
 // ── Tab: Ranking de parejas ───────────────────────────────────────────
 function PairsTab() {
   const { user }                        = useAuth();
-  const { pairs, loading: pairsLoading, refetch } = usePairsRanking();
+  const { pairs, loading: pairsLoading, error: pairsError, refetch } = usePairsRanking();
   const { myPair, pairsMap, profileMap, loading: myLoading } = usePairs();
 
   // Challenge form state
@@ -186,6 +186,16 @@ function PairsTab() {
 
   if (pairsLoading || myLoading) {
     return <div className="empty-state card"><p>Cargando ranking de parejas…</p></div>;
+  }
+
+  if (pairsError) {
+    return (
+      <div className="empty-state card">
+        <h3>No se pudo cargar el ranking de parejas.</h3>
+        <p style={{ marginBottom: 16 }}>Verificá tu conexión e intentá de nuevo.</p>
+        <button className="btn btn-secondary" onClick={refetch}>Reintentar</button>
+      </div>
+    );
   }
 
   if (pairs.length === 0) {
