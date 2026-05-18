@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useEvent, useEventPlayers } from "../hooks/useEvents";
-import { generateMexicanoRound } from "../utils/generateMexicanoRound";
 import { FORMAT_LABELS } from "../utils/formatters";
 import "./EventCoordinator.css";
 
@@ -11,11 +10,6 @@ import "./EventCoordinator.css";
    Orden: pts evento → victorias → empates → head-to-head → diff general
 ───────────────────────────────────────────────────────────── */
 
-/**
- * Diferencia de puntos entre jugadorA y jugadorB
- * en los partidos donde se enfrentaron directamente.
- * Retorna positivo si A le ganó más puntos a B que B a A.
- */
 function headToHeadDiff(playerA, playerB, savedMatches) {
   let diff = 0;
   for (const match of savedMatches) {
@@ -23,8 +17,6 @@ function headToHeadDiff(playerA, playerB, savedMatches) {
     const aInB = match.teamB.some((p) => p.id === playerA.id);
     const bInA = match.teamA.some((p) => p.id === playerB.id);
     const bInB = match.teamB.some((p) => p.id === playerB.id);
-
-    // Solo cuenta si están en equipos opuestos
     if ((aInA && bInB) || (aInB && bInA)) {
       const aScore = aInA ? Number(match.teamAScore) : Number(match.teamBScore);
       const bScore = bInA ? Number(match.teamAScore) : Number(match.teamBScore);
@@ -34,47 +26,36 @@ function headToHeadDiff(playerA, playerB, savedMatches) {
   return diff;
 }
 
-/** Comparador con reglas de desempate completas. */
 function compareStandings(a, b, savedMatches) {
-  if (b.eventPoints !== a.eventPoints)   return b.eventPoints - a.eventPoints;
-  if (b.wins        !== a.wins)          return b.wins - a.wins;
-  if (b.ties        !== a.ties)          return b.ties - a.ties;
-  const h2h = headToHeadDiff(a, b, savedMatches);
-  if (h2h !== 0)                         return -h2h; // positivo → A gana → va primero
-  const diffA = a.pointsFor - a.pointsAgainst;
-  const diffB = b.pointsFor - b.pointsAgainst;
-  return diffB - diffA;
+  if (b.eventPoints !== a.eventPoints) return b.eventPoints - a.eventPoints;
+  if (b.wins        !== a.wins)        return b.wins        - a.wins;
+  if (b.ties        !== a.ties)        return b.ties        - a.ties;
+  const h2h  = headToHeadDiff(a, b, savedMatches);
+  if (h2h !== 0) return -h2h;
+  return (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst);
 }
-
-/* ─────────────────────────────────────────────────────────────
-   Helpers de estado
-───────────────────────────────────────────────────────────── */
 
 function calcStandings(basePlayers, savedMatches) {
   return basePlayers.map((player) => {
     let pts = 0, pj = 0, pg = 0, pe = 0, pp = 0, pf = 0, pa = 0;
-
     for (const match of savedMatches) {
       const inA = match.teamA.some((p) => p.id === player.id);
       const inB = match.teamB.some((p) => p.id === player.id);
       if (!inA && !inB) continue;
-
       const myScore  = inA ? Number(match.teamAScore) : Number(match.teamBScore);
       const oppScore = inA ? Number(match.teamBScore) : Number(match.teamAScore);
-
       pts += myScore; pf += myScore; pa += oppScore; pj++;
       if      (myScore > oppScore)   pg++;
       else if (myScore === oppScore) pe++;
       else                           pp++;
     }
-
     return { ...player, eventPoints: pts, matchesPlayed: pj, wins: pg, ties: pe, losses: pp, pointsFor: pf, pointsAgainst: pa };
   });
 }
 
 function dbMatchToLocal(dbMatch, playersList) {
   const find    = (uid) => playersList.find((p) => p.id === uid) ?? { id: uid, name: "Jugador", level: "?" };
-  const localId = `${dbMatch.round_number}-${(dbMatch.court_number - 1) * 4}`;
+  const localId = `${dbMatch.round_number}-${dbMatch.court_number}`;
   return {
     id: localId, dbId: dbMatch.id,
     roundNumber: dbMatch.round_number, courtNumber: dbMatch.court_number,
@@ -92,19 +73,21 @@ function dbMatchToLocal(dbMatch, playersList) {
 ───────────────────────────────────────────────────────────── */
 
 function EventCoordinator() {
-  const { id }       = useParams();
-  const navigate     = useNavigate();
-  const { event, pointRules, loading: eventLoading }    = useEvent(id);
+  const { id }   = useParams();
+  const navigate = useNavigate();
+  const { event, pointRules, loading: eventLoading }          = useEvent(id);
   const { players: registeredPlayers, loading: playersLoading } = useEventPlayers(id);
 
-  const [currentRound, setCurrentRound] = useState(1);
-  const [players,      setPlayers]      = useState([]);
-  const [matches,      setMatches]      = useState([]);
-  const [matchHistory, setMatchHistory] = useState([]);
-  const [initialized,  setInitialized]  = useState(false);
-  const [saving,       setSaving]       = useState(false);
-  const [finalizing,   setFinalizing]   = useState(false);
-  const [cancelling,   setCancelling]   = useState(false);
+  const [currentRound,   setCurrentRound]   = useState(0);   // 0 = ninguna ronda generada aún
+  const [players,        setPlayers]        = useState([]);
+  const [matches,        setMatches]        = useState([]);
+  const [matchHistory,   setMatchHistory]   = useState([]);
+  const [initialized,    setInitialized]    = useState(false);
+  const [saving,         setSaving]         = useState(false);
+  const [generatingRound,setGeneratingRound]= useState(false);
+  const [finalizing,     setFinalizing]     = useState(false);
+  const [cancelling,     setCancelling]     = useState(false);
+  const [actionError,    setActionError]    = useState(null);
 
   /* ── Mapa posición → puntos de ranking ─────────────────── */
   const pointsMap = useMemo(() => {
@@ -113,51 +96,47 @@ function EventCoordinator() {
     return map;
   }, [pointRules]);
 
-  /* ── Inicialización desde DB ────────────────────────────── */
+  /* ── Carga de partidos desde DB ─────────────────────────── */
+  const loadMatchesFromDB = useCallback(async () => {
+    const { data: dbMatches = [] } = await supabase
+      .from("matches")
+      .select("*")
+      .eq("event_id", id)
+      .order("round_number", { ascending: true })
+      .order("court_number", { ascending: true });
+
+    if (!dbMatches.length) {
+      // Sin partidos: estado inicial
+      setPlayers(registeredPlayers);
+      setMatches([]);
+      setMatchHistory([]);
+      setCurrentRound(0);
+      return;
+    }
+
+    const finishedDb   = dbMatches.filter((m) => m.status === "finished");
+    const historyLocal = finishedDb.map((m) => dbMatchToLocal(m, registeredPlayers));
+    const standings    = calcStandings(registeredPlayers, historyLocal);
+    const maxRound     = Math.max(...dbMatches.map((m) => m.round_number));
+    const currentInDb  = dbMatches.filter((m) => m.round_number === maxRound);
+
+    setMatchHistory(historyLocal);
+    setPlayers(standings);
+    setCurrentRound(maxRound);
+    setMatches(currentInDb.map((m) => dbMatchToLocal(m, registeredPlayers)));
+  }, [id, registeredPlayers]);
+
+  /* ── Inicialización ─────────────────────────────────────── */
   useEffect(() => {
     if (playersLoading || initialized || !id) return;
+    loadMatchesFromDB().then(() => setInitialized(true));
+  }, [registeredPlayers, playersLoading, initialized, id, loadMatchesFromDB]);
 
-    async function init() {
-      const { data: dbMatches = [] } = await supabase
-        .from("matches").select("*").eq("event_id", id)
-        .order("round_number", { ascending: true })
-        .order("court_number", { ascending: true });
-
-      const finishedDb = dbMatches.filter((m) => m.status === "finished");
-
-      if (!registeredPlayers.length || !finishedDb.length) {
-        setPlayers(registeredPlayers);
-        setMatches(generateMexicanoRound(registeredPlayers, 1));
-        setCurrentRound(1);
-      } else {
-        const historyLocal = finishedDb.map((m) => dbMatchToLocal(m, registeredPlayers));
-        const standings    = calcStandings(registeredPlayers, historyLocal);
-        const maxRound     = Math.max(...finishedDb.map((m) => m.round_number));
-        const currentInDb  = dbMatches.filter((m) => m.round_number === maxRound);
-        const allDone      = currentInDb.every((m) => m.status === "finished");
-
-        setMatchHistory(historyLocal);
-        setPlayers(standings);
-
-        if (allDone) {
-          const nextRound = maxRound + 1;
-          setCurrentRound(nextRound);
-          setMatches(generateMexicanoRound(standings, nextRound));
-        } else {
-          setCurrentRound(maxRound);
-          setMatches(currentInDb.map((m) => dbMatchToLocal(m, registeredPlayers)));
-        }
-      }
-      setInitialized(true);
-    }
-    init();
-  }, [registeredPlayers, playersLoading, initialized, id]);
-
-  /* ── Standings ordenados con desempate completo ─────────── */
-  const savedMatches   = useMemo(() => matchHistory.filter((m) => m.isSaved), [matchHistory]);
-  const sortedPlayers  = useMemo(
+  /* ── Standings ordenados ────────────────────────────────── */
+  const savedMatches  = useMemo(() => matchHistory.filter((m) => m.isSaved), [matchHistory]);
+  const sortedPlayers = useMemo(
     () => [...players].sort((a, b) => compareStandings(a, b, savedMatches)),
-    [players, savedMatches]
+    [players, savedMatches],
   );
 
   /* ── Handlers de partidos ───────────────────────────────── */
@@ -173,7 +152,7 @@ function EventCoordinator() {
     const bScore = Number(match.teamBScore);
 
     if (match.teamAScore === "" || match.teamBScore === "" || isNaN(aScore) || isNaN(bScore)) {
-      alert("Ingresá ambos resultados antes de guardar.");
+      setActionError("Ingresá ambos resultados antes de guardar.");
       return;
     }
 
@@ -189,7 +168,7 @@ function EventCoordinator() {
             team_a_score: aScore, team_b_score: bScore,
             status: "finished", finished_at: new Date().toISOString(),
           },
-          { onConflict: "event_id,round_number,court_number" }
+          { onConflict: "event_id,round_number,court_number" },
         );
       if (matchErr) throw matchErr;
 
@@ -202,7 +181,7 @@ function EventCoordinator() {
       setMatchHistory(newHistory);
       setPlayers(newStandings);
 
-      // Persistir stats de jugadores que ya jugaron
+      // Persistir stats parciales de jugadores
       const active = newStandings.filter((p) => p.matchesPlayed > 0);
       if (active.length > 0) {
         await supabase.from("player_event_results").upsert(
@@ -212,32 +191,41 @@ function EventCoordinator() {
             points_for: p.pointsFor, points_against: p.pointsAgainst,
             updated_at: new Date().toISOString(),
           })),
-          { onConflict: "event_id,player_id" }
+          { onConflict: "event_id,player_id" },
         );
       }
     } catch (err) {
-      alert("Error al guardar resultado: " + err.message);
+      setActionError("Error al guardar resultado: " + err.message);
     } finally {
       setSaving(false);
     }
   }
 
   function handleEditResult(matchId) {
-    const newMatches   = matches.map((m) => m.id === matchId ? { ...m, status: "Editando", isSaved: false, isEditing: true } : m);
-    const newHistory   = matchHistory.filter((m) => m.id !== matchId);
+    const newMatches = matches.map((m) => m.id === matchId ? { ...m, status: "Editando", isSaved: false, isEditing: true } : m);
+    const newHistory = matchHistory.filter((m) => m.id !== matchId);
     setMatches(newMatches);
     setMatchHistory(newHistory);
     setPlayers(calcStandings(registeredPlayers, newHistory));
   }
 
-  function handleGenerateNextRound() {
-    if (matches.some((m) => !m.isSaved)) {
-      alert("Guardá todos los resultados antes de generar la siguiente ronda.");
+  /* ── Generar ronda (llama al backend) ───────────────────── */
+  async function handleGenerateRound() {
+    if (matches.length > 0 && matches.some((m) => !m.isSaved)) {
+      setActionError("Guardá todos los resultados antes de generar la siguiente ronda.");
       return;
     }
-    const nextRound = currentRound + 1;
-    setCurrentRound(nextRound);
-    setMatches(generateMexicanoRound(sortedPlayers, nextRound));
+    setActionError(null);
+    setGeneratingRound(true);
+    try {
+      const { error } = await supabase.rpc("generate_round", { p_event_id: id });
+      if (error) throw error;
+      await loadMatchesFromDB();
+    } catch (err) {
+      setActionError("Error al generar la ronda: " + err.message);
+    } finally {
+      setGeneratingRound(false);
+    }
   }
 
   /* ── Cancelar evento ───────────────────────────────────── */
@@ -246,9 +234,8 @@ function EventCoordinator() {
       "¿Cancelar este evento?\n\nTodas las inscripciones activas serán canceladas. Esta acción no se puede deshacer."
     );
     if (!confirmed) return;
-
     const reason = window.prompt("Motivo de cancelación (opcional):");
-    if (reason === null) return; // el admin presionó "Cancelar" en el prompt
+    if (reason === null) return;
 
     setCancelling(true);
     try {
@@ -260,7 +247,7 @@ function EventCoordinator() {
       if (data?.error) throw new Error(data.error);
       navigate("/admin");
     } catch (err) {
-      alert("Error al cancelar el evento: " + err.message);
+      setActionError("Error al cancelar el evento: " + err.message);
     } finally {
       setCancelling(false);
     }
@@ -274,10 +261,8 @@ function EventCoordinator() {
 
     setFinalizing(true);
     try {
-      // Posiciones finales con desempate completo
       const finalStandings = [...players].sort((a, b) => compareStandings(a, b, savedMatches));
 
-      // Upsert player_event_results con posición y puntos de ranking
       const upserts = finalStandings.map((player, index) => ({
         event_id:       id,
         player_id:      player.id,
@@ -296,7 +281,6 @@ function EventCoordinator() {
         .upsert(upserts, { onConflict: "event_id,player_id" });
       if (resErr) throw resErr;
 
-      // Marcar evento como finalizado
       const { error: evErr } = await supabase
         .from("events")
         .update({ status: "finished" })
@@ -305,13 +289,13 @@ function EventCoordinator() {
 
       navigate("/admin");
     } catch (err) {
-      alert("Error al finalizar el evento: " + err.message);
+      setActionError("Error al finalizar el evento: " + err.message);
     } finally {
       setFinalizing(false);
     }
   }
 
-  /* ── Estados de carga / error ───────────────────────────── */
+  /* ── Estados de carga ───────────────────────────────────── */
   if (eventLoading || playersLoading || !initialized) {
     return (
       <main className="section coordinator-page">
@@ -336,18 +320,33 @@ function EventCoordinator() {
     );
   }
 
-  const formatLabel      = FORMAT_LABELS[event.format] ?? event.format;
-  const allCurrentSaved  = matches.length > 0 && matches.every((m) => m.isSaved);
-  const hasHistory       = matchHistory.length > 0;
-  const isFinished       = event.status === "finished";
-  const isCancelled      = event.status === "cancelled";
-  const isLocked         = isFinished || isCancelled;
+  const formatLabel     = FORMAT_LABELS[event.format] ?? event.format;
+  const allCurrentSaved = matches.length > 0 && matches.every((m) => m.isSaved);
+  const hasHistory      = matchHistory.length > 0;
+  const isFinished      = event.status === "finished";
+  const isCancelled     = event.status === "cancelled";
+  const isLocked        = isFinished || isCancelled;
+
+  // Puede generar ronda: si no hay ninguna todavía, o si todos los partidos actuales están guardados
+  const canGenerateRound = !isLocked && (currentRound === 0 || allCurrentSaved);
+  const generateBtnLabel = currentRound === 0 ? "Generar ronda 1" : "Siguiente ronda";
 
   /* ── Render ─────────────────────────────────────────────── */
   return (
     <main className="section coordinator-page">
       <div className="container">
         <Link className="back-link" to="/admin">← Volver al admin</Link>
+
+        {actionError && (
+          <div className="coordinator-action-error card" role="alert">
+            <span>⚠️ {actionError}</span>
+            <button
+              className="coordinator-action-error-close"
+              onClick={() => setActionError(null)}
+              aria-label="Cerrar"
+            >✕</button>
+          </div>
+        )}
 
         <div className="coordinator-header">
           <div>
@@ -370,7 +369,6 @@ function EventCoordinator() {
               {event.players_registered}/{event.player_limit} jugadores
               {event.courts ? ` · ${event.courts} canchas` : ""}
             </small>
-
             {!isLocked && (
               <button
                 className="btn btn-danger"
@@ -384,7 +382,6 @@ function EventCoordinator() {
           </div>
         </div>
 
-        {/* Evento cancelado */}
         {isCancelled && (
           <div className="event-cancelled-banner card">
             <strong>✗ Evento cancelado</strong>
@@ -395,7 +392,6 @@ function EventCoordinator() {
           </div>
         )}
 
-        {/* Evento finalizado */}
         {isFinished && (
           <div className="event-finished-banner card">
             <strong>✓ Evento finalizado</strong>
@@ -410,27 +406,35 @@ function EventCoordinator() {
             <div className="panel-header">
               <div>
                 <p className="section-kicker">Ronda actual</p>
-                <h2>Ronda {currentRound}</h2>
+                <h2>{currentRound === 0 ? "Sin rondas generadas" : `Ronda ${currentRound}`}</h2>
               </div>
 
-              <button
-                className="btn btn-primary"
-                onClick={handleGenerateNextRound}
-                disabled={saving || isLocked}
-              >
-                Siguiente ronda
-              </button>
+              {canGenerateRound && (
+                <button
+                  className="btn btn-primary"
+                  onClick={handleGenerateRound}
+                  disabled={generatingRound || saving}
+                >
+                  {generatingRound ? "Generando…" : generateBtnLabel}
+                </button>
+              )}
             </div>
 
-            <div className="round-note">
-              {currentRound === 1
-                ? "Primera ronda generada al azar."
-                : "Ronda generada según puntaje acumulado (con desempate)."}
-            </div>
+            {currentRound > 0 && (
+              <div className="round-note">
+                {currentRound === 1
+                  ? "Primera ronda generada al azar."
+                  : "Ronda generada según puntaje acumulado (con desempate)."}
+              </div>
+            )}
 
             {matches.length === 0 ? (
-              <div className="empty-state card" style={{ marginTop: 16 }}>
-                <p>No hay jugadores inscritos en este evento aún.</p>
+              <div className="empty-state" style={{ padding: "24px 0" }}>
+                <p style={{ color: "var(--color-text-muted)" }}>
+                  {currentRound === 0
+                    ? "Presioná \"Generar ronda 1\" para comenzar el evento."
+                    : "No hay partidos en esta ronda."}
+                </p>
               </div>
             ) : (
               <div className="match-list">
@@ -558,9 +562,9 @@ function EventCoordinator() {
 
             <div className="final-positions-list">
               {sortedPlayers.map((player, index) => {
-                const pos        = index + 1;
-                const rPoints    = pointsMap[pos] ?? 0;
-                const diff       = player.pointsFor - player.pointsAgainst;
+                const pos     = index + 1;
+                const rPoints = pointsMap[pos] ?? 0;
+                const diff    = player.pointsFor - player.pointsAgainst;
                 return (
                   <div className="final-position-row" key={player.id}>
                     <span className={`final-pos-badge ${pos <= 3 ? `top-${pos}` : ""}`}>

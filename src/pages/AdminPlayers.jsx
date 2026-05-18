@@ -87,7 +87,7 @@ function AdminPlayers() {
     }));
   }
 
-  // ── Guardar cambio de categoría ──
+  // ── Guardar cambio de categoría (via RPC con auditoría) ──
   async function saveEdit() {
     if (!editing.category) { setSaveError("Seleccioná una categoría."); return; }
     if (!editing.level)    { setSaveError("Seleccioná un nivel.");      return; }
@@ -96,38 +96,19 @@ function AdminPlayers() {
     setSaveError("");
     setSaveOk("");
 
-    // 1. Actualizar profiles
-    const { error: profileErr } = await supabase
-      .from("profiles")
-      .update({
-        current_category: editing.category,
-        current_level:    editing.level,
-      })
-      .eq("id", editing.id);
+    const { error } = await supabase.rpc("update_player_category", {
+      p_player_id: editing.id,
+      p_category:  editing.category,
+      p_level:     editing.level,
+      p_reason:    editing.reason || null,
+    });
 
-    if (profileErr) {
-      setSaveError("Error al actualizar: " + profileErr.message);
+    if (error) {
+      setSaveError("Error al actualizar: " + error.message);
       setSaving(false);
       return;
     }
 
-    // 2. Registrar en historial
-    const player = players.find((p) => p.id === editing.id);
-    const changed = player?.current_category !== editing.category ||
-                    player?.current_level    !== editing.level;
-
-    if (changed) {
-      await supabase.from("player_category_history").insert({
-        player_id:     editing.id,
-        category_code: editing.category,
-        level_code:    editing.level,
-        decided_by:    user.id,
-        reason:        editing.reason || null,
-        started_at:    new Date().toISOString(),
-      });
-    }
-
-    // 3. Refrescar lista local
     setPlayers((prev) =>
       prev.map((p) =>
         p.id === editing.id

@@ -1,0 +1,151 @@
+.audit-page {
+  min-height: calc(100vh - 78px);
+}
+
+.audit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+/* ── Filtros ── */
+.audit-filters {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.audit-filter-count {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+
+/* ── Lista ── */
+.audit-list {
+  display: grid;
+  gap: 8px;
+}
+
+.audit-list-head {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.5fr 1.5fr 1.3fr;
+  gap: 12px;
+  padding: 10px 18px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.audit-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.5fr 1.5fr 1.3fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 18px;
+}
+
+/* ── Celdas ── */
+.audit-action-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.audit-notes {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.audit-actor {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-white);
+  align-self: center;
+}
+
+.audit-data-cell {
+  align-self: center;
+}
+
+.audit-date {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  align-self: center;
+}
+
+/* ── Badges de acción ── */
+.audit-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  width: fit-content;
+}
+
+.audit-blue   { background: rgba(99,179,237,0.15);  color: #63b3ed; }
+.audit-green  { background: rgba(154,230,180,0.15); color: #9ae6b4; }
+.audit-red    { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+.audit-orange { background: rgba(246,173,85,0.15);  color: #f6ad55; }
+.audit-purple { background: rgba(183,148,244,0.15); color: #b794f4; }
+
+/* ── Data pills ── */
+.audit-data-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.audit-data-entry {
+  display: flex;
+  gap: 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.audit-data-key {
+  color: var(--color-text-muted);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.audit-data-val {
+  color: var(--color-white);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .audit-list-head { display: none; }
+
+  .audit-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .audit-action-cell { grid-column: 1 / -1; }
+  .audit-date        { text-align: right; }
+}
+
+@media (max-width: 540px) {
+  .audit-header { flex-direction: column; }
+
+  .audit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-date { text-align: left; }
+}

@@ -36,11 +36,11 @@
 ## 🟡 P3 — Calidad y robustez
 
 - [x] **3.1 Validación servidor**: doble inscripción, categoría/nivel incorrecto (con soporte de autorizaciones especiales), reto duplicado — todo en server-side. Frontend muestra "Categoría no compatible" preventivamente
-- [ ] **3.2 Auditoría** (registrar cambios sensibles en `audit_log`)
-- [ ] **3.3 Loading + error states** en todas las páginas
+- [x] **3.2 Auditoría** (registrar cambios sensibles en `audit_log`)
+- [x] **3.3 Loading + error states** en todas las páginas
 - [ ] **3.4 Tests** para lógica de puntos, retos, waitlist y reglas de desempate
-- [ ] **3.5 Página 404 + manejo global de errores**
-- [ ] **3.6 Mover lógica de generación de rondas al backend**
+- [x] **3.5 Página 404 + manejo global de errores**
+- [x] **3.6 Mover lógica de generación de rondas al backend**
 - [x] **3.7 Validación de contraseña segura**: mín. 8 caracteres + mayúscula + minúscula + número (en `/registro`)
 
 ## 🟢 P4 — Mejoras de negocio sugeridas
@@ -129,4 +129,4 @@
 
 ---
 
-**Progreso:** 23 / 39 ítems completos (59.0%)
+**Progreso:** 27 / 39 ítems completos (69.2%)

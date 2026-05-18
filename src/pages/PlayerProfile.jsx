@@ -9,13 +9,27 @@ import "./PlayerProfile.css";
 
 function PlayerProfile() {
   const { isAdmin } = useAuth();
-  const { profile, registrations, results, rankingInfo, loading } = useProfile();
+  const { profile, registrations, results, rankingInfo, loading, error, refetch } = useProfile();
 
   if (loading) {
     return (
       <main className="section profile-page">
         <div className="container">
           <div className="auth-loading"><span>Cargando perfil…</span></div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="section profile-page">
+        <div className="container">
+          <div className="empty-state card">
+            <h3>No se pudo cargar el perfil.</h3>
+            <p style={{ marginBottom: 16 }}>{error.message ?? "Error de conexión."}</p>
+            <button className="btn btn-secondary" onClick={refetch}>Reintentar</button>
+          </div>
         </div>
       </main>
     );

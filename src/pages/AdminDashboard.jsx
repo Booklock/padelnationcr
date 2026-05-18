@@ -228,6 +228,9 @@ function AdminDashboard() {
                 <Link className="quick-action" to="/admin/exclusiones">
                   Exclusiones de ranking
                 </Link>
+                <Link className="quick-action" to="/admin/auditoria">
+                  Registro de auditoría
+                </Link>
               </div>
             </aside>
 
