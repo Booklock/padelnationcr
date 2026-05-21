@@ -47,7 +47,7 @@
 
 - [ ] **4.1 Notificaciones expandidas**
 - [ ] **4.2 Pagos en línea** (SINPE Móvil + Stripe)
-- [ ] **4.3 Sistema de no-show / reputación**
+- [x] **4.3 Sistema de no-show / reputación**
 - [ ] **4.4 Estadísticas avanzadas en perfil**
 - [ ] **4.5 Calendario público embebible**
 - [ ] **4.6 Histórico de temporadas con archivo**
@@ -129,4 +129,4 @@
 
 ---
 
-**Progreso:** 27 / 39 ítems completos (69.2%)
+**Progreso:** 28 / 39 ítems completos (71.8%)

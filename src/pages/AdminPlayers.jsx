@@ -42,11 +42,28 @@ function AdminPlayers() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, email, phone, gender, current_category, current_level, role, created_at")
+      .select("id, full_name, email, phone, gender, current_category, current_level, role, no_show_count, suspended_until, suspension_reason, created_at")
       .order("full_name", { ascending: true });
 
     if (!error) setPlayers(data ?? []);
     setLoading(false);
+  }
+
+  // ── Rehabilitar jugador suspendido ──
+  async function rehabilitatePlayer(playerId) {
+    if (!window.confirm("¿Rehabilitar este jugador? Se elimina la suspensión vigente.")) return;
+    const { error } = await supabase.rpc("rehabilitate_player", { p_player_id: playerId });
+    if (error) {
+      setSaveError("Error al rehabilitar: " + error.message);
+      setSaveOk("");
+      return;
+    }
+    setPlayers((prev) =>
+      prev.map((p) =>
+        p.id === playerId ? { ...p, suspended_until: null, suspension_reason: null } : p
+      )
+    );
+    setSaveOk("Jugador rehabilitado correctamente.");
   }
 
   // ── Filtrado local ──
@@ -185,6 +202,7 @@ function AdminPlayers() {
                   <th>Género</th>
                   <th>Categoría</th>
                   <th>Nivel</th>
+                  <th>Reputación</th>
                   <th>Rol</th>
                   <th></th>
                 </tr>
@@ -231,7 +249,7 @@ function AdminPlayers() {
                             ))}
                           </select>
                         </td>
-                        <td colSpan={2}>
+                        <td colSpan={3}>
                           <div className="ap-edit-actions">
                             <input
                               className="ap-reason-input"
@@ -272,6 +290,22 @@ function AdminPlayers() {
                           <span className="ap-level">{player.current_level ?? "—"}</span>
                         </td>
                         <td>
+                          <div className="ap-reputation">
+                            {(player.no_show_count ?? 0) > 0 ? (
+                              <span className="ap-noshow-badge">
+                                {player.no_show_count} no-show{player.no_show_count !== 1 ? "s" : ""}
+                              </span>
+                            ) : (
+                              <span className="ap-noshow-ok">Sin no-shows</span>
+                            )}
+                            {player.suspended_until && new Date(player.suspended_until) > new Date() && (
+                              <span className="ap-suspended-badge" title={player.suspension_reason ?? ""}>
+                                Suspendido
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
                           <span className={`ap-role-badge role-${player.role}`}>
                             {player.role === "super_admin" ? "Super Admin"
                               : player.role === "admin"    ? "Admin"
@@ -280,13 +314,24 @@ function AdminPlayers() {
                           </span>
                         </td>
                         <td>
-                          <button
-                            className="ap-edit-btn"
-                            onClick={() => startEdit(player)}
-                            title="Cambiar categoría/nivel"
-                          >
-                            Editar
-                          </button>
+                          <div className="ap-action-btns">
+                            <button
+                              className="ap-edit-btn"
+                              onClick={() => startEdit(player)}
+                              title="Cambiar categoría/nivel"
+                            >
+                              Editar
+                            </button>
+                            {player.suspended_until && new Date(player.suspended_until) > new Date() && (
+                              <button
+                                className="ap-rehabilitate-btn"
+                                onClick={() => rehabilitatePlayer(player.id)}
+                                title="Levantar la suspensión"
+                              >
+                                Rehabilitar
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </>
                     )}

@@ -20,6 +20,7 @@ import AdminPlayers from "./pages/AdminPlayers";
 import AdminAuthorizations from "./pages/AdminAuthorizations";
 import AdminExclusions from "./pages/AdminExclusions";
 import AdminAudit from "./pages/AdminAudit";
+import AdminSettings from "./pages/AdminSettings";
 
 function App() {
   return (
@@ -106,6 +107,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                     <AdminAudit />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/configuracion"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                    <AdminSettings />
                   </ProtectedRoute>
                 }
               />

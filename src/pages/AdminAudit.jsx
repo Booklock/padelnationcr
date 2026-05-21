@@ -5,22 +5,27 @@ import { useAuth } from "../contexts/AuthContext";
 import "./AdminAudit.css";
 
 const ACTION_LABELS = {
-  category_change:    { label: "Cambio de categoría", color: "audit-blue"   },
-  auth_granted:       { label: "Autorización otorgada", color: "audit-green" },
-  auth_revoked:       { label: "Autorización revocada", color: "audit-red"   },
-  result_excluded:    { label: "Resultado excluido",  color: "audit-orange" },
-  result_included:    { label: "Resultado incluido",  color: "audit-green"  },
-  challenge_resolved: { label: "Reto resuelto",       color: "audit-purple" },
+  category_change:      { label: "Cambio de categoría",   color: "audit-blue"   },
+  auth_granted:         { label: "Autorización otorgada", color: "audit-green"  },
+  auth_revoked:         { label: "Autorización revocada", color: "audit-red"    },
+  result_excluded:      { label: "Resultado excluido",    color: "audit-orange" },
+  result_included:      { label: "Resultado incluido",    color: "audit-green"  },
+  challenge_resolved:   { label: "Reto resuelto",         color: "audit-purple" },
+  no_show_marked:       { label: "No-show marcado",       color: "audit-orange" },
+  no_show_cleared:      { label: "No-show desmarcado",    color: "audit-green"  },
+  player_rehabilitated: { label: "Jugador rehabilitado",  color: "audit-blue"   },
 };
 
 const ACTION_FILTER_OPTIONS = [
-  { key: "all",               label: "Todos" },
-  { key: "category_change",   label: "Categorías" },
-  { key: "auth_granted",      label: "Autorizaciones" },
-  { key: "auth_revoked",      label: "Revocaciones" },
-  { key: "result_excluded",   label: "Exclusiones" },
-  { key: "result_included",   label: "Inclusiones" },
-  { key: "challenge_resolved",label: "Retos" },
+  { key: "all",                 label: "Todos" },
+  { key: "category_change",     label: "Categorías" },
+  { key: "auth_granted",        label: "Autorizaciones" },
+  { key: "auth_revoked",        label: "Revocaciones" },
+  { key: "result_excluded",     label: "Exclusiones" },
+  { key: "result_included",     label: "Inclusiones" },
+  { key: "challenge_resolved",  label: "Retos" },
+  { key: "no_show_marked",      label: "No-shows" },
+  { key: "player_rehabilitated",label: "Rehabilitaciones" },
 ];
 
 function formatDate(ts) {

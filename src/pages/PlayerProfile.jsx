@@ -35,12 +35,19 @@ function PlayerProfile() {
     );
   }
 
-  const displayName   = profile?.full_name  ?? "Jugador";
-  const category      = profile?.current_category ?? "—";
-  const level         = profile?.current_level    ?? "—";
-  const phone         = profile?.phone   ?? null;
-  const gender        = profile?.gender  ?? null;
-  const GENDER_LABELS = { male: "Masculino", female: "Femenino", unspecified: null };
+  const displayName     = profile?.full_name  ?? "Jugador";
+  const category        = profile?.current_category ?? "—";
+  const level           = profile?.current_level    ?? "—";
+  const phone           = profile?.phone   ?? null;
+  const gender          = profile?.gender  ?? null;
+  const GENDER_LABELS   = { male: "Masculino", female: "Femenino", unspecified: null };
+  const noShowCount     = profile?.no_show_count    ?? 0;
+  const suspendedUntil  = profile?.suspended_until  ?? null;
+  const isSuspended     = suspendedUntil && new Date(suspendedUntil) > new Date();
+  const suspUntilLabel  = isSuspended
+    ? new Intl.DateTimeFormat("es-CR", { day: "2-digit", month: "long", year: "numeric" })
+        .format(new Date(suspendedUntil))
+    : null;
   const totalPoints   = rankingInfo?.total_points   ?? 0;
   const rankingPos    = rankingInfo?.position       ?? "—";
   const eventsPlayed  = rankingInfo?.events_counted ?? 0;
@@ -113,6 +120,22 @@ function PlayerProfile() {
           </div>
         </section>
 
+        {/* Banner suspensión */}
+        {isSuspended && (
+          <div className="profile-suspension-banner">
+            <span className="profile-suspension-icon">🚫</span>
+            <div>
+              <strong>Tu cuenta está suspendida hasta el {suspUntilLabel}.</strong>
+              <p>
+                {profile?.suspension_reason
+                  ? profile.suspension_reason
+                  : "No podés inscribirte a nuevos eventos durante este período."}
+                {" "}Si crees que es un error, contactá al administrador.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Stats */}
         <section className="profile-stats-grid">
           <div className="profile-stat-card card">
@@ -134,6 +157,17 @@ function PlayerProfile() {
             <span>Próximos eventos</span>
             <strong>{upcomingRegs.length}</strong>
             <small>Inscripciones activas</small>
+          </div>
+          <div className={`profile-stat-card card ${noShowCount > 0 ? "profile-stat-card--warning" : ""}`}>
+            <span>No-shows</span>
+            <strong>{noShowCount}</strong>
+            <small>
+              {isSuspended
+                ? "⚠ Cuenta suspendida"
+                : noShowCount === 0
+                  ? "Reputación impecable"
+                  : `${noShowCount} ausencia${noShowCount !== 1 ? "s" : ""} sin avisar`}
+            </small>
           </div>
         </section>
 

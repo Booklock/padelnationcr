@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { useEvent, useEventPlayers } from "../hooks/useEvents";
+import { useEvent, useEventPlayers, useEventAttendance } from "../hooks/useEvents";
 import { FORMAT_LABELS } from "../utils/formatters";
 import "./EventCoordinator.css";
 
@@ -75,8 +75,9 @@ function dbMatchToLocal(dbMatch, playersList) {
 function EventCoordinator() {
   const { id }   = useParams();
   const navigate = useNavigate();
-  const { event, pointRules, loading: eventLoading }          = useEvent(id);
-  const { players: registeredPlayers, loading: playersLoading } = useEventPlayers(id);
+  const { event, pointRules, loading: eventLoading }                   = useEvent(id);
+  const { players: registeredPlayers, loading: playersLoading }          = useEventPlayers(id);
+  const { registrations: attendanceRegs, loading: attendanceLoading, refetch: refetchAttendance } = useEventAttendance(id);
 
   const [currentRound,   setCurrentRound]   = useState(0);   // 0 = ninguna ronda generada aún
   const [players,        setPlayers]        = useState([]);
@@ -87,6 +88,7 @@ function EventCoordinator() {
   const [generatingRound,setGeneratingRound]= useState(false);
   const [finalizing,     setFinalizing]     = useState(false);
   const [cancelling,     setCancelling]     = useState(false);
+  const [markingNoShow,  setMarkingNoShow]  = useState(null); // registrationId en proceso
   const [actionError,    setActionError]    = useState(null);
 
   /* ── Mapa posición → puntos de ranking ─────────────────── */
@@ -225,6 +227,25 @@ function EventCoordinator() {
       setActionError("Error al generar la ronda: " + err.message);
     } finally {
       setGeneratingRound(false);
+    }
+  }
+
+  /* ── Marcar / desmarcar no-show ────────────────────────── */
+  async function handleToggleNoShow(regId, currentValue) {
+    setMarkingNoShow(regId);
+    setActionError(null);
+    try {
+      const { data, error } = await supabase.rpc("mark_no_show", {
+        p_registration_id: regId,
+        p_is_no_show:      !currentValue,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      await refetchAttendance();
+    } catch (err) {
+      setActionError("Error al marcar asistencia: " + err.message);
+    } finally {
+      setMarkingNoShow(null);
     }
   }
 
@@ -536,6 +557,58 @@ function EventCoordinator() {
             </div>
           </aside>
         </div>
+
+        {/* ── Sección asistencia ──────────────────────────── */}
+        {!isCancelled && (
+          <section className="card coordinator-panel attendance-section">
+            <div className="panel-header">
+              <div>
+                <p className="section-kicker">Asistencia</p>
+                <h2>Control de no-shows</h2>
+              </div>
+              {attendanceLoading && (
+                <span style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>Actualizando…</span>
+              )}
+            </div>
+
+            <p className="attendance-note">
+              Marcá los jugadores que <strong>no se presentaron</strong> al evento.
+              Si acumulan suficientes no-shows serán suspendidos automáticamente.
+            </p>
+
+            {attendanceRegs.length === 0 ? (
+              <p className="attendance-empty">No hay jugadores confirmados.</p>
+            ) : (
+              <div className="attendance-list">
+                {attendanceRegs.map((reg) => (
+                  <div
+                    key={reg.id}
+                    className={`attendance-row ${reg.no_show ? "attendance-no-show" : ""}`}
+                  >
+                    <div className="attendance-player-info">
+                      <strong>{reg.profiles?.full_name ?? "Jugador"}</strong>
+                      <small>
+                        Nivel {reg.profiles?.current_level ?? "?"} · Cat. {reg.profiles?.current_category ?? "?"}
+                      </small>
+                    </div>
+                    <button
+                      className={`attendance-toggle ${reg.no_show ? "is-no-show" : ""}`}
+                      onClick={() => handleToggleNoShow(reg.id, reg.no_show)}
+                      disabled={markingNoShow === reg.id}
+                      title={reg.no_show ? "Desmarcar — estaba presente" : "Marcar como no-show"}
+                    >
+                      {markingNoShow === reg.id
+                        ? "…"
+                        : reg.no_show
+                          ? "✗ No-show"
+                          : "✓ Presente"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ── Sección finalizar evento ─────────────────────── */}
         {!isLocked && hasHistory && allCurrentSaved && (

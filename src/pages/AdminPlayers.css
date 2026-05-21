@@ -192,6 +192,48 @@
   color: #63b3ed;
 }
 
+/* ── Reputation ── */
+.ap-reputation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ap-noshow-ok {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.ap-noshow-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: rgba(251, 191, 36, 0.14);
+  color: #fbbf24;
+  letter-spacing: 0.03em;
+}
+
+.ap-suspended-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: rgba(239, 68, 68, 0.14);
+  color: #f87171;
+  letter-spacing: 0.03em;
+}
+
+/* ── Action buttons (edit + rehabilitate) ── */
+.ap-action-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
 /* ── Edit button ── */
 .ap-edit-btn {
   padding: 6px 14px;
@@ -210,6 +252,24 @@
   background: rgba(220, 251, 0, 0.12);
   color: var(--color-lime);
   border-color: rgba(220, 251, 0, 0.3);
+}
+
+/* ── Rehabilitate button ── */
+.ap-rehabilitate-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+}
+
+.ap-rehabilitate-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
 }
 
 /* ── Inline edit controls ── */

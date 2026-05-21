@@ -1,0 +1,173 @@
+.admin-settings-page {
+  min-height: calc(100vh - 78px);
+}
+
+/* ── Header ── */
+.as-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+/* ── Error banner ── */
+.as-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
+.as-error-close {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.as-error-close:hover { opacity: 1; }
+
+/* ── Loading ── */
+.as-loading {
+  color: var(--color-text-muted);
+  padding: 36px;
+  text-align: center;
+}
+
+/* ── Group section ── */
+.as-group {
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.as-group-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  margin: 0 0 6px;
+}
+
+.as-group-desc {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 28px;
+}
+
+/* ── Settings list ── */
+.as-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.as-setting-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.as-setting-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.as-setting-row:first-child {
+  padding-top: 0;
+}
+
+/* ── Setting info ── */
+.as-setting-label {
+  display: block;
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.as-setting-desc {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.as-setting-updated {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
+/* ── Control (input + button) ── */
+.as-setting-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.as-input {
+  width: 100px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.as-input:focus {
+  outline: none;
+  border-color: var(--color-lime);
+}
+
+/* Remove arrows on number inputs */
+.as-input[type="number"]::-webkit-outer-spin-button,
+.as-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+.as-input[type="number"] { -moz-appearance: textfield; }
+
+.as-save-btn {
+  min-width: 110px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.as-save-btn.as-save-ok {
+  background: rgba(220, 251, 0, 0.12) !important;
+  color: var(--color-lime) !important;
+  border: 1px solid rgba(220, 251, 0, 0.3) !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .as-header {
+    flex-direction: column;
+  }
+
+  .as-setting-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .as-setting-control {
+    justify-content: flex-start;
+  }
+}

@@ -231,6 +231,9 @@ function AdminDashboard() {
                 <Link className="quick-action" to="/admin/auditoria">
                   Registro de auditoría
                 </Link>
+                <Link className="quick-action" to="/admin/configuracion">
+                  Configuración del sistema
+                </Link>
               </div>
             </aside>
 

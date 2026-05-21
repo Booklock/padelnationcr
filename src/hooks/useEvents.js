@@ -140,6 +140,35 @@ export function useEventFinalResults(eventId) {
   return { results, loading };
 }
 
+/** Obtiene inscripciones confirmadas con flag no_show para el control de asistencia. */
+export function useEventAttendance(eventId) {
+  const [registrations, setRegistrations] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!eventId) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from("event_registrations")
+      .select("id, player_id, status, no_show, no_show_marked_at, profiles(id, full_name, current_level, current_category)")
+      .eq("event_id", eventId)
+      .eq("status", "confirmed");
+
+    setRegistrations(
+      (data ?? []).sort((a, b) =>
+        (a.profiles?.full_name ?? "").localeCompare(b.profiles?.full_name ?? "")
+      )
+    );
+    setLoading(false);
+  }, [eventId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { registrations, loading, refetch: load };
+}
+
 /** Obtiene los jugadores registrados (confirmados) de un evento. */
 export function useEventPlayers(eventId) {
   const [players, setPlayers] = useState([]);
