@@ -11,6 +11,10 @@ function PlayerProfile() {
   const { isAdmin } = useAuth();
   const { profile, registrations, results, rankingInfo, loading, error, refetch } = useProfile();
 
+  // ── Hooks deben ir ANTES de cualquier return condicional ──
+  const [cancellingId, setCancellingId] = useState(null);
+  const [cancelError,  setCancelError]  = useState(null);
+
   if (loading) {
     return (
       <main className="section profile-page">
@@ -66,9 +70,6 @@ function PlayerProfile() {
   const POSITION_MEDALS = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
   // Cancelar inscripción desde el perfil
-  const [cancellingId, setCancellingId] = useState(null);
-  const [cancelError,  setCancelError]  = useState(null);
-
   async function handleLeaveEvent(eventId) {
     if (!window.confirm("¿Querés salir de este evento? Si hay alguien en lista de espera pasará automáticamente.")) return;
     setCancellingId(eventId);
