@@ -30,24 +30,27 @@ const FORMAT_DESCRIPTIONS = {
 // Etiquetas y descripciones del criterio de fin de partido
 const CRITERION_LABELS = {
   time:   "Duración (minutos)",
-  games:  "Juegos por partido",
-  points: "Puntos para ganar",
+  points: "Total de puntos a jugar",
 };
 
 const CRITERION_HINTS = {
   time:   "Los partidos terminan cuando se acaba el tiempo. Ej.: 15 min.",
-  games:  "El primer equipo en ganar N juegos gana el partido. Ej.: 6 juegos.",
-  points: "El primer equipo en alcanzar N puntos gana el partido. Ej.: 21 puntos.",
+  points: "La partida termina cuando la suma de puntos de ambos equipos alcanza el total configurado. Ej.: 24 puntos — si el marcador es 14-10 el partido termina.",
 };
 
-// Escala de puntos por defecto (hasta 8 posiciones)
-const DEFAULT_POINTS = [100, 80, 65, 52, 40, 30, 20, 10];
+// Escala de puntos por defecto — se genera dinámicamente para cualquier cupo
+function defaultPointsForPosition(pos) {
+  // Top 8 con escala fija; del 9 en adelante decrece linealmente hasta 1
+  const fixed = [100, 80, 65, 52, 40, 30, 20, 10];
+  if (pos <= fixed.length) return fixed[pos - 1];
+  return Math.max(1, 10 - (pos - 8));   // 9→9, 10→8, 11→7 … mín 1
+}
 
 function buildInitialRules(playerLimit) {
-  const count = Math.min(Number(playerLimit), 8);
+  const count = Number(playerLimit);
   return Array.from({ length: count }, (_, i) => ({
     position: i + 1,
-    points:   DEFAULT_POINTS[i] ?? 5,
+    points:   defaultPointsForPosition(i + 1),
   }));
 }
 
@@ -78,9 +81,9 @@ function CreateEvent() {
   const [saving,    setSaving]    = useState(false);
   const [saveError, setSaveError] = useState(null);
 
-  // Ajustar tabla de puntos cuando cambia el cupo
+  // Ajustar tabla de puntos cuando cambia el cupo (sin límite de posiciones)
   useEffect(() => {
-    const newCount = Math.min(Number(formData.playerLimit), 8);
+    const newCount = Number(formData.playerLimit);
     setPointRules((prev) => {
       if (newCount === prev.length) return prev;
       if (newCount > prev.length) {
@@ -88,7 +91,7 @@ function CreateEvent() {
           { length: newCount - prev.length },
           (_, i) => ({
             position: prev.length + i + 1,
-            points:   DEFAULT_POINTS[prev.length + i] ?? 5,
+            points:   defaultPointsForPosition(prev.length + i + 1),
           })
         );
         return [...prev, ...extra];
@@ -299,10 +302,20 @@ function CreateEvent() {
                 {/* 2.2 — Criterio de fin de partido */}
                 <label className="form-field">
                   <span>Criterio de fin de partido</span>
-                  <select name="matchEndCriterion" value={formData.matchEndCriterion} onChange={handleChange}>
+                  <select
+                    name="matchEndCriterion"
+                    value={formData.matchEndCriterion}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        matchEndCriterion: val,
+                        matchEndValue: val === "points" ? 24 : val === "time" ? 15 : prev.matchEndValue,
+                      }));
+                    }}
+                  >
                     <option value="time">Tiempo (minutos)</option>
-                    <option value="games">Juegos</option>
-                    <option value="points">Puntos</option>
+                    <option value="points">Puntos totales</option>
                   </select>
                 </label>
 
@@ -314,7 +327,7 @@ function CreateEvent() {
               </div>
 
               <div className="criterion-hint">
-                <strong>{formData.matchEndCriterion === "time" ? "⏱ Tiempo" : formData.matchEndCriterion === "games" ? "🎾 Juegos" : "🏆 Puntos"}</strong>
+                <strong>{formData.matchEndCriterion === "time" ? "⏱ Tiempo" : "🏆 Puntos totales"}</strong>
                 <p>{CRITERION_HINTS[formData.matchEndCriterion]}</p>
               </div>
 
@@ -424,9 +437,7 @@ function CreateEvent() {
                   <span>Fin de partido</span>
                   <strong>
                     {formData.matchEndValue}{" "}
-                    {formData.matchEndCriterion === "time" ? "min"
-                      : formData.matchEndCriterion === "games" ? "juegos"
-                      : "puntos"}
+                    {formData.matchEndCriterion === "time" ? "min" : "pts totales"}
                   </strong>
                 </div>
                 <div>
@@ -471,8 +482,8 @@ function CreateEvent() {
                   </div>
                 )}
                 <div>
-                  <span>Posiciones con pts</span>
-                  <strong>{pointRules.filter((r) => r.points > 0).length}</strong>
+                  <span>Posiciones con puntos</span>
+                  <strong>{pointRules.filter((r) => r.points > 0).length} / {pointRules.length}</strong>
                 </div>
               </div>
             </article>
