@@ -114,9 +114,24 @@
 
 .event-page-card-header {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
+  margin-bottom: 2px;
+}
+
+.event-page-card-header .status-pill {
+  margin-left: auto;
+}
+
+/* Gender badge on event cards */
+.event-gender-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
 }
 
 .status-pill {

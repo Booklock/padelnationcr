@@ -30,6 +30,20 @@ export const STATUS_CLASS = {
   draft:       "",
 };
 
+/** Filtro de género: etiqueta visible y color del badge */
+export const GENDER_FILTER_LABELS = {
+  any:    null,          // sin badge
+  male:   "Masculino",
+  female: "Femenino",
+  mixed:  "Mixto",
+};
+
+export const GENDER_FILTER_CLASS = {
+  male:   "gender-male",
+  female: "gender-female",
+  mixed:  "gender-mixed",
+};
+
 export const CATEGORY_OPTIONS = ["AA", "A", "B", "C", "D"];
 export const FORMAT_OPTIONS    = ["mexicano", "americano", "reto", "torneo"];
 

@@ -59,6 +59,7 @@ function CreateEvent() {
     title:              "",
     format:             "Mexicano",
     category:           "B",
+    genderFilter:       "any",
     date:               "",
     time:               "19:00",
     location:           "",
@@ -154,6 +155,7 @@ function CreateEvent() {
           format:              formData.format.toLowerCase(),
           category_code:       formData.category,
           allowed_levels:      CATEGORY_LEVELS[formData.category] ?? [],
+          gender_filter:       formData.genderFilter,
           starts_at,
           location:            formData.location.trim() || null,
           player_limit:        Number(formData.playerLimit),
@@ -236,6 +238,16 @@ function CreateEvent() {
                   <span>Categoría</span>
                   <select name="category" value={formData.category} onChange={handleChange}>
                     {EVENT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <span>Género</span>
+                  <select name="genderFilter" value={formData.genderFilter} onChange={handleChange}>
+                    <option value="any">Sin restricción</option>
+                    <option value="male">Masculino</option>
+                    <option value="female">Femenino</option>
+                    <option value="mixed">Mixto (M + F)</option>
                   </select>
                 </label>
 
@@ -386,6 +398,11 @@ function CreateEvent() {
               <div className="preview-category">
                 <span>Categoría</span>
                 <strong>{formData.category}</strong>
+                {formData.genderFilter !== "any" && (
+                  <small className={`preview-gender-badge gender-${formData.genderFilter}`}>
+                    {{ male: "Masculino", female: "Femenino", mixed: "Mixto" }[formData.genderFilter]}
+                  </small>
+                )}
               </div>
 
               <h2>{formData.title || "Nombre del evento"}</h2>

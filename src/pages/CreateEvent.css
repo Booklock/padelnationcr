@@ -195,6 +195,15 @@
   line-height: 0.8;
 }
 
+.preview-gender-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .event-preview-card h2 {
   margin: 0 0 20px;
 }

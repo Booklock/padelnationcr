@@ -357,6 +357,15 @@
   font-size: 0.78rem;
 }
 
+/* ── Gender badge (event summary card) ─────────── */
+.event-summary .event-gender-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
 /* ── Attendance section ──────────────────────────── */
 .attendance-section {
   margin-top: 24px;

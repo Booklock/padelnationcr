@@ -3,11 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useEvents } from "../hooks/useEvents";
 import { useMyRegistrations, registerForEvent, cancelRegistration } from "../hooks/useRegistration";
-import { FORMAT_LABELS, STATUS_LABELS, STATUS_CLASS, formatEventDate, formatEventTime } from "../utils/formatters";
+import { FORMAT_LABELS, STATUS_LABELS, STATUS_CLASS, GENDER_FILTER_LABELS, GENDER_FILTER_CLASS, formatEventDate, formatEventTime } from "../utils/formatters";
 import "./Events.css";
 
-const CATEGORIES = ["Todos", "AA", "A", "B", "C", "D"];
-const FORMATS    = ["Todos", "Mexicano", "Americano", "Reto", "Torneo"];
+const CATEGORIES     = ["Todos", "AA", "A", "B", "C", "D"];
+const FORMATS        = ["Todos", "Mexicano", "Americano", "Reto", "Torneo"];
+const GENDER_FILTERS = [
+  { value: "todos",  label: "Todos" },
+  { value: "male",   label: "Masculino" },
+  { value: "female", label: "Femenino" },
+  { value: "mixed",  label: "Mixto" },
+];
 
 function Events() {
   const navigate = useNavigate();
@@ -15,12 +21,22 @@ function Events() {
 
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [selectedFormat,   setSelectedFormat]   = useState("Todos");
+  const [selectedGender,   setSelectedGender]   = useState("todos");
 
-  const { events, loading, error, refetch: refetchEvents } = useEvents({
+  const { events: allEvents, loading, error, refetch: refetchEvents } = useEvents({
     excludeStatuses: ["draft", "cancelled"],
     category: selectedCategory !== "Todos" ? selectedCategory : undefined,
     format:   selectedFormat   !== "Todos" ? selectedFormat   : undefined,
   });
+
+  // Filtro de género (client-side, ya que el hook ya hace la query)
+  const events = useMemo(() => {
+    if (selectedGender === "todos") return allEvents;
+    if (selectedGender === "male")   return allEvents.filter((e) => e.gender_filter === "male");
+    if (selectedGender === "female") return allEvents.filter((e) => e.gender_filter === "female");
+    if (selectedGender === "mixed")  return allEvents.filter((e) => e.gender_filter === "mixed");
+    return allEvents;
+  }, [allEvents, selectedGender]);
 
   const { regs, loading: regsLoading, refetch: refetchRegs } = useMyRegistrations();
 
@@ -34,14 +50,32 @@ function Events() {
     [events]
   );
 
-  /* ── Elegibilidad de categoría (cliente) ─────────────────── */
-  // Devuelve true si el jugador logueado puede inscribirse según su nivel.
+  /* ── Elegibilidad (cliente) ───────────────────────────────── */
+  // Devuelve { ok, reason } para el jugador logueado.
   // Las autorizaciones especiales se validan solo en el servidor; acá
-  // simplemente evitamos el click para el caso común.
-  function isEligible(event) {
-    if (!user || !profile) return true; // sin sesión → redirigir al login, no bloquear
-    if (!profile.current_level)  return false; // sin nivel asignado → no elegible
-    return (event.allowed_levels ?? []).includes(profile.current_level);
+  // simplemente evitamos el click para el caso más común.
+  function getEligibility(event) {
+    if (!user || !profile) return { ok: true };  // sin sesión → redirigir al login
+
+    // Chequeo de género
+    const gf = event.gender_filter ?? "any";
+    if (gf === "male" && profile.gender !== "male") {
+      return { ok: false, reason: "gender", label: "Solo masculino" };
+    }
+    if (gf === "female" && profile.gender !== "female") {
+      return { ok: false, reason: "gender", label: "Solo femenino" };
+    }
+    if (gf === "mixed" && !["male", "female"].includes(profile.gender)) {
+      return { ok: false, reason: "gender", label: "Requiere género en perfil" };
+    }
+
+    // Chequeo de nivel
+    if (!profile.current_level) return { ok: false, reason: "level", label: "Sin nivel asignado" };
+    if (!(event.allowed_levels ?? []).includes(profile.current_level)) {
+      return { ok: false, reason: "level", label: "Categoría no compatible" };
+    }
+
+    return { ok: true };
   }
 
   /* ── Handlers ────────────────────────────────────────────── */
@@ -154,6 +188,21 @@ function Events() {
               ))}
             </div>
           </div>
+
+          <div>
+            <h2>Género</h2>
+            <div className="filter-list">
+              {GENDER_FILTERS.map((gf) => (
+                <button
+                  key={gf.value}
+                  className={selectedGender === gf.value ? "filter-pill active" : "filter-pill"}
+                  onClick={() => setSelectedGender(gf.value)}
+                >
+                  {gf.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* Resultados */}
@@ -197,15 +246,21 @@ function Events() {
                 const statusLabel = STATUS_LABELS[event.status] ?? event.status;
                 const statusClass = STATUS_CLASS[event.status] ?? "";
 
-                const myReg    = regs[event.id] ?? null;
-                const isBusy   = actionEventId === event.id;
-                const msg      = actionMsgs[event.id] ?? null;
-                const eligible = isEligible(event);
+                const myReg      = regs[event.id] ?? null;
+                const isBusy     = actionEventId === event.id;
+                const msg        = actionMsgs[event.id] ?? null;
+                const eligResult = getEligibility(event);
+                const eligible   = eligResult.ok;
+                const gfLabel    = GENDER_FILTER_LABELS[event.gender_filter];
+                const gfClass    = GENDER_FILTER_CLASS[event.gender_filter];
 
                 return (
                   <article className="event-page-card card" key={event.id}>
                     <div className="event-page-card-header">
                       <span className="badge">{FORMAT_LABELS[event.format] ?? event.format}</span>
+                      {gfLabel && (
+                        <span className={`event-gender-badge ${gfClass}`}>{gfLabel}</span>
+                      )}
                       <span className={`status-pill ${statusClass}`}>{statusLabel}</span>
                     </div>
 
@@ -285,14 +340,26 @@ function Events() {
                       </div>
 
                     ) : !eligible && user ? (
-                      /* Jugador logueado pero categoría incorrecta */
+                      /* Jugador logueado pero no cumple requisitos */
                       <div className="reg-action-area">
                         <div className="reg-not-eligible">
-                          <span>⚠️ Categoría no compatible</span>
-                          <small>
-                            Tu nivel ({profile?.current_level ?? "sin asignar"}) no está en los
-                            niveles habilitados para este evento.
-                          </small>
+                          {eligResult.reason === "gender" ? (
+                            <>
+                              <span>⚠️ {eligResult.label}</span>
+                              <small>
+                                Este evento tiene restricción de género. Si tu perfil
+                                es incorrecto, contactá al admin.
+                              </small>
+                            </>
+                          ) : (
+                            <>
+                              <span>⚠️ Categoría no compatible</span>
+                              <small>
+                                Tu nivel ({profile?.current_level ?? "sin asignar"}) no está en los
+                                niveles habilitados para este evento.
+                              </small>
+                            </>
+                          )}
                         </div>
                       </div>
 

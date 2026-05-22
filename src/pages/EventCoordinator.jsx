@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useEvent, useEventPlayers, useEventAttendance } from "../hooks/useEvents";
-import { FORMAT_LABELS } from "../utils/formatters";
+import { FORMAT_LABELS, GENDER_FILTER_LABELS, GENDER_FILTER_CLASS } from "../utils/formatters";
 import "./EventCoordinator.css";
 
 /* ─────────────────────────────────────────────────────────────
@@ -384,6 +384,11 @@ function EventCoordinator() {
 
           <div className="event-summary card">
             <span className="badge">{formatLabel}</span>
+            {GENDER_FILTER_LABELS[event.gender_filter] && (
+              <span className={`event-gender-badge ${GENDER_FILTER_CLASS[event.gender_filter]}`}>
+                {GENDER_FILTER_LABELS[event.gender_filter]}
+              </span>
+            )}
             <strong>Categoría {event.category_code}</strong>
             {event.location && <small>{event.location}</small>}
             <small>

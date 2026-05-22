@@ -53,7 +53,7 @@
 - [ ] **4.6 Histórico de temporadas con archivo**
 - [ ] **4.7 Entidad Club con coordinador local**
 - [ ] **4.8 Validación de elegibilidad por categoría en backend**
-- [ ] **4.9 Categorías por género (M / F / Mixto)**
+- [x] **4.9 Categorías por género (M / F / Mixto)**
 - [ ] **4.10 PWA / app instalable**
 
 ---
@@ -129,4 +129,4 @@
 
 ---
 
-**Progreso:** 28 / 39 ítems completos (71.8%)
+**Progreso:** 29 / 39 ítems completos (74.4%)
