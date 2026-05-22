@@ -13,7 +13,10 @@ ALTER TABLE public.events
 
 
 -- ── 2. Vista v_events_list actualizada ────────────────────────────
-CREATE OR REPLACE VIEW public.v_events_list AS
+-- DROP primero porque CREATE OR REPLACE no permite agregar columnas en el medio
+DROP VIEW IF EXISTS public.v_events_list;
+
+CREATE VIEW public.v_events_list AS
 SELECT
   e.id,
   e.title,
