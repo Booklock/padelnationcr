@@ -47,17 +47,19 @@ export function AuthProvider({ children }) {
     return supabase.auth.signInWithPassword({ email, password });
   }
 
-  async function signUp(email, password, { fullName, phone, gender, category, level }) {
+  async function signUp(email, password, { fullName, nickname, phone, gender, category, level, preferredSide }) {
     return supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name:        fullName,
+          nickname:         nickname         || null,
           phone:            phone            || null,
           gender:           gender           || "unspecified",
           current_category: category         || null,
           current_level:    level            || null,
+          preferred_side:   preferredSide    || null,
         },
       },
     });

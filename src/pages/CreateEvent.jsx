@@ -1,20 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { combineDateTime } from "../utils/formatters";
 import "./CreateEvent.css";
 
-const EVENT_FORMATS    = ["Mexicano", "Americano", "Reto", "Torneo"];
-const EVENT_CATEGORIES = ["AA", "A", "B", "C", "D"];
+const EVENT_FORMATS = ["Mexicano", "Americano", "Reto", "Torneo"];
 
-const CATEGORY_LEVELS = {
-  AA: ["AA"],
-  A:  ["A+", "A", "A-"],
-  B:  ["B+", "B", "B-"],
-  C:  ["C+", "C", "C-"],
-  D:  ["D+", "D", "D-"],
-};
+// Todos los niveles agrupados por categoría — para el selector de pills
+const LEVELS_BY_CAT = [
+  { cat: "AA", levels: ["AA"] },
+  { cat: "A",  levels: ["A+", "A", "A-"] },
+  { cat: "B",  levels: ["B+", "B", "B-"] },
+  { cat: "C",  levels: ["C+", "C", "C-"] },
+  { cat: "D",  levels: ["D+", "D", "D-"] },
+];
+
+// Deriva el código de categoría para display a partir de los niveles seleccionados
+// Ej: ["B+","A-"] → "A/B" | ["B+","B","B-"] → "B"
+function deriveCategoryCode(levels) {
+  if (levels.length === 0) return "—";
+  const getCat = (l) => l.replace(/[+-]$/, "");
+  const cats = [...new Set(levels.map(getCat))].sort();
+  return cats.join("/");
+}
 
 const FORMAT_DESCRIPTIONS = {
   Mexicano:
@@ -55,14 +64,16 @@ function buildInitialRules(playerLimit) {
 }
 
 function CreateEvent() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const { user }  = useAuth();
 
   const [formData, setFormData] = useState({
     title:              "",
     format:             "Mexicano",
-    category:           "B",
+    selectedLevels:     ["B+", "B", "B-"],
     genderFilter:       "any",
+    pairFormat:         false,
     date:               "",
     time:               "19:00",
     location:           "",
@@ -71,6 +82,7 @@ function CreateEvent() {
     rounds:             4,
     matchEndCriterion:  "time",
     matchEndValue:      15,
+    warmUpTime:         0,
     price:              0,
     prize:              "",
   });
@@ -78,8 +90,35 @@ function CreateEvent() {
   // Tabla de puntos por posición — editable por el admin
   const [pointRules, setPointRules] = useState(() => buildInitialRules(16));
 
-  const [saving,    setSaving]    = useState(false);
-  const [saveError, setSaveError] = useState(null);
+  const [saving,         setSaving]         = useState(false);
+  const [saveError,      setSaveError]      = useState(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateMsg,    setTemplateMsg]    = useState("");
+
+  // Cargar plantilla si viene desde /admin/plantillas
+  useEffect(() => {
+    const t = location.state?.template;
+    if (!t) return;
+    setFormData((prev) => ({
+      ...prev,
+      format:            t.format ? t.format.charAt(0).toUpperCase() + t.format.slice(1) : prev.format,
+      selectedLevels:    t.allowed_levels?.length > 0 ? t.allowed_levels : prev.selectedLevels,
+      genderFilter:      t.gender_filter     ?? prev.genderFilter,
+      pairFormat:        t.pair_format       ?? prev.pairFormat,
+      location:          t.location          ?? prev.location,
+      playerLimit:       t.player_limit      ?? prev.playerLimit,
+      courts:            t.courts            ?? prev.courts,
+      rounds:            t.rounds            ?? prev.rounds,
+      matchEndCriterion: t.match_end_criterion ?? prev.matchEndCriterion,
+      matchEndValue:     t.match_end_value   ?? prev.matchEndValue,
+      warmUpTime:        t.warm_up_time      ?? prev.warmUpTime,
+      price:             t.price_crc         ?? prev.price,
+      prize:             t.prize_description ?? prev.prize,
+    }));
+    if (t.point_rules?.length > 0) {
+      setPointRules(t.point_rules);
+    }
+  }, [location.state]);
 
   // Ajustar tabla de puntos cuando cambia el cupo (sin límite de posiciones)
   useEffect(() => {
@@ -100,9 +139,10 @@ function CreateEvent() {
     });
   }, [formData.playerLimit]);
 
-  const allowedLevels = useMemo(
-    () => CATEGORY_LEVELS[formData.category] ?? [],
-    [formData.category]
+  // Código de categoría derivado de los niveles seleccionados (para display y DB)
+  const categoryCode = useMemo(
+    () => deriveCategoryCode(formData.selectedLevels),
+    [formData.selectedLevels]
   );
 
   const estimatedMatchesPerRound = Math.floor(Number(formData.playerLimit) / 4);
@@ -114,6 +154,68 @@ function CreateEvent() {
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  }
+
+  // Guardar configuración actual como plantilla
+  async function saveAsTemplate() {
+    const name = window.prompt("Nombre para la plantilla (ej. \"Pozo Mexicano Viernes B\"):");
+    if (!name?.trim()) return;
+    if (formData.selectedLevels.length === 0) {
+      setTemplateMsg("❌ Seleccioná al menos un nivel antes de guardar la plantilla.");
+      return;
+    }
+    setSavingTemplate(true);
+    setTemplateMsg("");
+    const { error } = await supabase.from("event_templates").insert({
+      name:                name.trim(),
+      format:              formData.format.toLowerCase(),
+      allowed_levels:      formData.selectedLevels,
+      gender_filter:       formData.genderFilter,
+      pair_format:         formData.pairFormat,
+      location:            formData.location.trim() || null,
+      player_limit:        Number(formData.playerLimit),
+      courts:              Number(formData.courts),
+      rounds:              Number(formData.rounds),
+      match_end_criterion: formData.matchEndCriterion,
+      match_end_value:     Number(formData.matchEndValue),
+      warm_up_time:        Number(formData.warmUpTime),
+      price_crc:           Number(formData.price),
+      prize_description:   formData.prize.trim() || null,
+      point_rules:         pointRules.filter((r) => r.points > 0),
+      created_by:          user.id,
+    });
+    if (error) setTemplateMsg("❌ " + error.message);
+    else       setTemplateMsg("✅ Plantilla guardada.");
+    setSavingTemplate(false);
+  }
+
+  // Toggle nivel individual
+  function toggleLevel(level) {
+    setFormData((prev) => {
+      const has = prev.selectedLevels.includes(level);
+      // No permitir dejar 0 niveles
+      if (has && prev.selectedLevels.length === 1) return prev;
+      return {
+        ...prev,
+        selectedLevels: has
+          ? prev.selectedLevels.filter((l) => l !== level)
+          : [...prev.selectedLevels, level],
+      };
+    });
+  }
+
+  // Toggle categoría completa (seleccionar/deseleccionar todos sus niveles)
+  function toggleCategoryLevels(levels) {
+    setFormData((prev) => {
+      const allSelected = levels.every((l) => prev.selectedLevels.includes(l));
+      if (allSelected) {
+        const remaining = prev.selectedLevels.filter((l) => !levels.includes(l));
+        // No dejar vacío
+        return { ...prev, selectedLevels: remaining.length > 0 ? remaining : prev.selectedLevels };
+      }
+      const merged = [...new Set([...prev.selectedLevels, ...levels])];
+      return { ...prev, selectedLevels: merged };
+    });
   }
 
   function handlePointRuleChange(index, newPoints) {
@@ -132,6 +234,10 @@ function CreateEvent() {
     }
     if (!formData.date) {
       setSaveError("La fecha es obligatoria.");
+      return;
+    }
+    if (formData.selectedLevels.length === 0) {
+      setSaveError("Seleccioná al menos un nivel para el evento.");
       return;
     }
 
@@ -156,9 +262,10 @@ function CreateEvent() {
           created_by:          user.id,
           title:               formData.title.trim(),
           format:              formData.format.toLowerCase(),
-          category_code:       formData.category,
-          allowed_levels:      CATEGORY_LEVELS[formData.category] ?? [],
+          category_code:       categoryCode,
+          allowed_levels:      formData.selectedLevels,
           gender_filter:       formData.genderFilter,
+          pair_format:         formData.pairFormat,
           starts_at,
           location:            formData.location.trim() || null,
           player_limit:        Number(formData.playerLimit),
@@ -166,6 +273,7 @@ function CreateEvent() {
           rounds:              formData.format === "Reto" ? 1 : Number(formData.rounds),
           match_end_criterion: formData.matchEndCriterion,
           match_end_value:     Number(formData.matchEndValue),
+          warm_up_time:        Number(formData.warmUpTime),
           price_crc:           Number(formData.price),
           prize_description:   formData.prize.trim() || null,
           status:              "open",
@@ -210,7 +318,7 @@ function CreateEvent() {
           <div className="create-event-format-card">
             <span>Formato seleccionado</span>
             <strong>{formData.format}</strong>
-            <small>Categoría {formData.category}</small>
+            <small>Categoría {categoryCode}</small>
           </div>
         </section>
 
@@ -237,12 +345,40 @@ function CreateEvent() {
                   </select>
                 </label>
 
-                <label className="form-field">
-                  <span>Categoría</span>
-                  <select name="category" value={formData.category} onChange={handleChange}>
-                    {EVENT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </label>
+                <div className="form-field form-field-wide">
+                  <span>Niveles permitidos *</span>
+                  <div className="level-selector">
+                    {LEVELS_BY_CAT.map(({ cat, levels }) => {
+                      const allActive = levels.every((l) => formData.selectedLevels.includes(l));
+                      return (
+                        <div key={cat} className="level-cat-row">
+                          <button
+                            type="button"
+                            className={`level-cat-btn${allActive ? " active" : ""}`}
+                            onClick={() => toggleCategoryLevels(levels)}
+                            title={allActive ? `Deseleccionar ${cat}` : `Seleccionar todos de ${cat}`}
+                          >
+                            {cat}
+                          </button>
+                          {levels.map((level) => (
+                            <button
+                              key={level}
+                              type="button"
+                              className={`level-pill${formData.selectedLevels.includes(level) ? " active" : ""}`}
+                              onClick={() => toggleLevel(level)}
+                            >
+                              {level}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <small className="level-hint">
+                    Seleccionados: <strong>{formData.selectedLevels.join(", ") || "ninguno"}</strong>
+                    {" · "}Categoría: <strong>{categoryCode}</strong>
+                  </small>
+                </div>
 
                 <label className="form-field">
                   <span>Género</span>
@@ -253,6 +389,34 @@ function CreateEvent() {
                     <option value="mixed">Mixto (M + F)</option>
                   </select>
                 </label>
+
+                <div className="form-field pair-format-toggle">
+                  <span>Evento de parejas fijas</span>
+                  <label className="pair-format-switch">
+                    <input
+                      type="checkbox"
+                      checked={formData.pairFormat}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, pairFormat: e.target.checked }))
+                      }
+                    />
+                    <span className="pair-format-slider" />
+                    <span className="pair-format-label">
+                      {formData.pairFormat
+                        ? `Sí — ${Math.floor(Number(formData.playerLimit) / 2)} parejas`
+                        : "No"}
+                    </span>
+                  </label>
+                  {formData.pairFormat && (
+                    <small className="level-hint">
+                      Los jugadores se inscriben en pareja. Cada pareja debe confirmar
+                      antes de que el coordinador pueda generar rondas.
+                      {formData.genderFilter === "mixed" && (
+                        <> <strong>Mixto:</strong> cada pareja debe ser un hombre + una mujer.</>
+                      )}
+                    </small>
+                  )}
+                </div>
 
                 <label className="form-field">
                   <span>Fecha *</span>
@@ -324,6 +488,12 @@ function CreateEvent() {
                   <input type="number" min="1" name="matchEndValue"
                     value={formData.matchEndValue} onChange={handleChange} />
                 </label>
+
+                <label className="form-field">
+                  <span>Calentamiento previo (min)</span>
+                  <input type="number" min="0" max="60" name="warmUpTime"
+                    value={formData.warmUpTime} onChange={handleChange} />
+                </label>
               </div>
 
               <div className="criterion-hint">
@@ -390,10 +560,20 @@ function CreateEvent() {
               </div>
             </div>
 
-            {saveError && <p className="auth-error" role="alert">{saveError}</p>}
+            {saveError   && <p className="auth-error"   role="alert">{saveError}</p>}
+            {templateMsg && <p className={`template-msg ${templateMsg.startsWith("✅") ? "template-msg-ok" : "template-msg-err"}`}>{templateMsg}</p>}
 
             <div className="form-actions">
               <Link className="btn btn-secondary" to="/admin">Cancelar</Link>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={saveAsTemplate}
+                disabled={savingTemplate}
+                title="Guardá esta configuración para reutilizarla en futuros eventos"
+              >
+                {savingTemplate ? "Guardando…" : "Guardar como plantilla"}
+              </button>
               <button className="btn btn-primary" type="submit" disabled={saving}>
                 {saving ? "Guardando…" : "Crear evento"}
               </button>
@@ -410,7 +590,7 @@ function CreateEvent() {
 
               <div className="preview-category">
                 <span>Categoría</span>
-                <strong>{formData.category}</strong>
+                <strong>{categoryCode}</strong>
                 {formData.genderFilter !== "any" && (
                   <small className={`preview-gender-badge gender-${formData.genderFilter}`}>
                     {{ male: "Masculino", female: "Femenino", mixed: "Mixto" }[formData.genderFilter]}
@@ -440,6 +620,12 @@ function CreateEvent() {
                     {formData.matchEndCriterion === "time" ? "min" : "pts totales"}
                   </strong>
                 </div>
+                {Number(formData.warmUpTime) > 0 && (
+                  <div>
+                    <span>Calentamiento</span>
+                    <strong>{formData.warmUpTime} min</strong>
+                  </div>
+                )}
                 <div>
                   <span>Precio</span>
                   <strong>₡{Number(formData.price).toLocaleString("es-CR")}</strong>
@@ -449,7 +635,7 @@ function CreateEvent() {
               <div className="preview-levels">
                 <span>Niveles permitidos</span>
                 <div>
-                  {allowedLevels.map((level) => <strong key={level}>{level}</strong>)}
+                  {formData.selectedLevels.map((level) => <strong key={level}>{level}</strong>)}
                 </div>
               </div>
             </article>
@@ -475,12 +661,29 @@ function CreateEvent() {
                   <span>Partidos estimados</span>
                   <strong>{totalEstimatedMatches}</strong>
                 </div>
-                {formData.matchEndCriterion === "time" && (
-                  <div>
-                    <span>Duración estimada</span>
-                    <strong>{Number(formData.rounds) * Number(formData.matchEndValue)} min</strong>
-                  </div>
-                )}
+                {formData.matchEndCriterion === "time" && (() => {
+                  const playingMins  = Number(formData.rounds) * Number(formData.matchEndValue);
+                  const warmUp       = Number(formData.warmUpTime);
+                  const totalMins    = playingMins + warmUp;
+                  return (
+                    <>
+                      <div>
+                        <span>Duración partidos</span>
+                        <strong>{playingMins} min</strong>
+                      </div>
+                      {warmUp > 0 && (
+                        <div>
+                          <span>Calentamiento</span>
+                          <strong>{warmUp} min</strong>
+                        </div>
+                      )}
+                      <div className="calculation-total">
+                        <span>⏱ Tiempo total</span>
+                        <strong>{totalMins} min</strong>
+                      </div>
+                    </>
+                  );
+                })()}
                 <div>
                   <span>Posiciones con puntos</span>
                   <strong>{pointRules.filter((r) => r.points > 0).length} / {pointRules.length}</strong>

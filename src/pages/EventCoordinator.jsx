@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useEvent, useEventPlayers, useEventAttendance } from "../hooks/useEvents";
@@ -91,6 +91,18 @@ function EventCoordinator() {
   const [markingNoShow,  setMarkingNoShow]  = useState(null); // registrationId en proceso
   const [actionError,    setActionError]    = useState(null);
 
+  // ── Pair management state ─────────────────────────────────────────
+  const [pairRegs,         setPairRegs]         = useState([]);   // registrations with pair info
+  const [pairProfiles,     setPairProfiles]      = useState({});   // profileId → profile
+  const [pairRegsLoading,  setPairRegsLoading]   = useState(false);
+  const [assigningFor,     setAssigningFor]      = useState(null); // playerId being assigned
+  const [assignSearch,     setAssignSearch]      = useState("");
+  const [assignResults,    setAssignResults]     = useState([]);
+  const [assignSearching,  setAssignSearching]   = useState(false);
+  const [assigningAction,  setAssigningAction]   = useState(false);
+  const [pairPanelError,   setPairPanelError]    = useState("");
+  const assignDebounce = useRef(null);
+
   /* ── Mapa posición → puntos de ranking ─────────────────── */
   const pointsMap = useMemo(() => {
     const map = {};
@@ -128,11 +140,44 @@ function EventCoordinator() {
     setMatches(currentInDb.map((m) => dbMatchToLocal(m, registeredPlayers)));
   }, [id, registeredPlayers]);
 
+  /* ── Carga de inscripciones con info de pareja ──────────── */
+  const loadPairRegs = useCallback(async () => {
+    if (!id) return;
+    setPairRegsLoading(true);
+    const { data: regs } = await supabase
+      .from("event_registrations")
+      .select("id, player_id, status, pair_partner_id, pair_confirmed")
+      .eq("event_id", id)
+      .in("status", ["registered", "confirmed", "waitlist"])
+      .order("registered_at", { ascending: true });
+
+    const allRegs = regs ?? [];
+    setPairRegs(allRegs);
+
+    const playerIds = [...new Set(
+      allRegs.flatMap((r) => [r.player_id, r.pair_partner_id].filter(Boolean))
+    )];
+    if (playerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, current_level, current_category")
+        .in("id", playerIds);
+      const map = {};
+      (profiles ?? []).forEach((p) => { map[p.id] = p; });
+      setPairProfiles(map);
+    }
+    setPairRegsLoading(false);
+  }, [id]);
+
   /* ── Inicialización ─────────────────────────────────────── */
   useEffect(() => {
     if (playersLoading || initialized || !id) return;
     loadMatchesFromDB().then(() => setInitialized(true));
   }, [registeredPlayers, playersLoading, initialized, id, loadMatchesFromDB]);
+
+  useEffect(() => {
+    if (event?.pair_format) loadPairRegs();
+  }, [event?.pair_format, id, loadPairRegs]);
 
   /* ── Standings ordenados ────────────────────────────────── */
   const savedMatches  = useMemo(() => matchHistory.filter((m) => m.isSaved), [matchHistory]);
@@ -217,6 +262,21 @@ function EventCoordinator() {
       setActionError("Guardá todos los resultados antes de generar la siguiente ronda.");
       return;
     }
+
+    // Para eventos de parejas, verificar que todas las parejas estén confirmadas
+    if (event.pair_format) {
+      const { data: readiness } = await supabase.rpc("check_pair_readiness", { p_event_id: id });
+      if (readiness && !readiness.ready) {
+        const tbd   = readiness.tbd_count ?? 0;
+        const unconf = readiness.unconfirmed_count ?? 0;
+        const parts = [];
+        if (tbd > 0)    parts.push(`${tbd} jugador${tbd !== 1 ? "es" : ""} sin pareja (TBD)`);
+        if (unconf > 0) parts.push(`${unconf} pareja${unconf !== 1 ? "s" : ""} sin confirmar`);
+        setActionError(`No se puede generar la ronda: ${parts.join(" · ")}. Resolvé las parejas primero.`);
+        return;
+      }
+    }
+
     setActionError(null);
     setGeneratingRound(true);
     try {
@@ -228,6 +288,47 @@ function EventCoordinator() {
     } finally {
       setGeneratingRound(false);
     }
+  }
+
+  /* ── Búsqueda de jugadores para asignar pareja ───────────── */
+  function handleAssignSearch(query) {
+    setAssignSearch(query);
+    if (!query.trim() || query.trim().length < 2) {
+      setAssignResults([]);
+      return;
+    }
+    clearTimeout(assignDebounce.current);
+    assignDebounce.current = setTimeout(async () => {
+      setAssignSearching(true);
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, current_level, current_category")
+        .ilike("full_name", `%${query.trim()}%`)
+        .eq("role", "player")
+        .eq("is_active", true)
+        .limit(6);
+      setAssignResults(data ?? []);
+      setAssignSearching(false);
+    }, 300);
+  }
+
+  async function handleAdminAssignPartner(playerId, partnerId) {
+    setAssigningAction(true);
+    setPairPanelError("");
+    const { data, error } = await supabase.rpc("admin_assign_pair_partner", {
+      p_event_id:   id,
+      p_player_id:  playerId,
+      p_partner_id: partnerId ?? null,
+    });
+    if (error || data?.error) {
+      setPairPanelError(error?.message ?? data.error);
+    } else {
+      setAssigningFor(null);
+      setAssignSearch("");
+      setAssignResults([]);
+      await loadPairRegs();
+    }
+    setAssigningAction(false);
   }
 
   /* ── Marcar / desmarcar no-show ────────────────────────── */
@@ -349,8 +450,14 @@ function EventCoordinator() {
   const isLocked        = isFinished || isCancelled;
 
   // Puede generar ronda: si no hay ninguna todavía, o si todos los partidos actuales están guardados
-  const canGenerateRound = !isLocked && (currentRound === 0 || allCurrentSaved);
-  const generateBtnLabel = currentRound === 0 ? "Generar ronda 1" : "Siguiente ronda";
+  const canGenerateRound  = !isLocked && (currentRound === 0 || allCurrentSaved);
+  const isExtraRound      = currentRound >= (event.rounds ?? 0) && currentRound > 0;
+  const generateBtnLabel  = currentRound === 0
+    ? "Generar ronda 1"
+    : isExtraRound
+      ? "Agregar ronda extra"
+      : "Siguiente ronda";
+  const roundsRemaining   = Math.max(0, (event.rounds ?? 0) - currentRound);
 
   /* ── Render ─────────────────────────────────────────────── */
   return (
@@ -390,11 +497,17 @@ function EventCoordinator() {
               </span>
             )}
             <strong>Categoría {event.category_code}</strong>
+            {event.pair_format && (
+              <span className="event-pair-badge-sm">👥 Parejas fijas</span>
+            )}
             {event.location && <small>{event.location}</small>}
             <small>
               {event.players_registered}/{event.player_limit} jugadores
               {event.courts ? ` · ${event.courts} canchas` : ""}
             </small>
+            {event.warm_up_time > 0 && (
+              <small>⏱ Calentamiento: {event.warm_up_time} min</small>
+            )}
             {!isLocked && (
               <button
                 className="btn btn-danger"
@@ -437,9 +550,10 @@ function EventCoordinator() {
 
               {canGenerateRound && (
                 <button
-                  className="btn btn-primary"
+                  className={`btn ${isExtraRound ? "btn-secondary" : "btn-primary"}`}
                   onClick={handleGenerateRound}
                   disabled={generatingRound || saving}
+                  title={isExtraRound ? "El evento tenía configuradas " + (event.rounds ?? 0) + " rondas. Esto agrega una extra." : undefined}
                 >
                   {generatingRound ? "Generando…" : generateBtnLabel}
                 </button>
@@ -615,6 +729,142 @@ function EventCoordinator() {
           </section>
         )}
 
+        {/* ── Sección parejas fijas ───────────────────────── */}
+        {event.pair_format && !isCancelled && (
+          <section className="card coordinator-panel pair-mgmt-section">
+            <div className="panel-header">
+              <div>
+                <p className="section-kicker">Parejas fijas</p>
+                <h2>Asignación de parejas</h2>
+              </div>
+              <button
+                className="btn btn-secondary"
+                onClick={() => { loadPairRegs(); setPairPanelError(""); }}
+                disabled={pairRegsLoading}
+              >
+                {pairRegsLoading ? "Actualizando…" : "Actualizar"}
+              </button>
+            </div>
+
+            <p className="pair-mgmt-note">
+              Todos los jugadores deben tener pareja asignada y confirmada antes de poder
+              generar rondas. Usá el botón <strong>"Asignar pareja"</strong> para resolver los TBD.
+            </p>
+
+            {pairPanelError && (
+              <p className="pair-mgmt-error">{pairPanelError}</p>
+            )}
+
+            {pairRegsLoading ? (
+              <p className="pair-mgmt-loading">Cargando parejas…</p>
+            ) : pairRegs.length === 0 ? (
+              <p className="pair-mgmt-empty">Aún no hay jugadores inscriptos.</p>
+            ) : (
+              <div className="pair-list">
+                {pairRegs.map((reg) => {
+                  const player  = pairProfiles[reg.player_id];
+                  const partner = reg.pair_partner_id ? pairProfiles[reg.pair_partner_id] : null;
+                  const isTbd   = !reg.pair_partner_id;
+                  const isPending = reg.pair_partner_id && !reg.pair_confirmed;
+                  const isAssigning = assigningFor === reg.player_id;
+
+                  return (
+                    <div
+                      key={reg.id}
+                      className={`pair-row ${isTbd ? "pair-row-tbd" : isPending ? "pair-row-pending" : "pair-row-ok"}`}
+                    >
+                      <div className="pair-row-player">
+                        <strong>{player?.full_name ?? "Jugador"}</strong>
+                        <small>Nivel {player?.current_level ?? "?"} · Cat. {player?.current_category ?? "?"}</small>
+                      </div>
+
+                      <div className="pair-row-partner">
+                        {isTbd ? (
+                          <span className="pair-tag-tbd">TBD</span>
+                        ) : (
+                          <>
+                            <span className={isPending ? "pair-tag-pending" : "pair-tag-ok"}>
+                              {isPending ? "⏳" : "✓"} {partner?.full_name ?? "Pareja"}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {!isLocked && (
+                        <div className="pair-row-actions">
+                          {isAssigning ? (
+                            <div className="pair-assign-form">
+                              <div className="pair-assign-search-wrap">
+                                <input
+                                  className="pair-assign-input"
+                                  type="text"
+                                  placeholder="Buscar jugador…"
+                                  value={assignSearch}
+                                  onChange={(e) => handleAssignSearch(e.target.value)}
+                                  autoFocus
+                                />
+                                {(assignSearching || assignResults.length > 0) && (
+                                  <ul className="pair-assign-results">
+                                    {assignSearching && <li className="pair-assign-searching">Buscando…</li>}
+                                    {!assignSearching && assignResults
+                                      .filter((p) => p.id !== reg.player_id) // no self-assign
+                                      .map((p) => (
+                                        <li
+                                          key={p.id}
+                                          className="pair-assign-item"
+                                          onClick={() => handleAdminAssignPartner(reg.player_id, p.id)}
+                                        >
+                                          <strong>{p.full_name}</strong>
+                                          <small>Nivel {p.current_level ?? "?"} · Cat. {p.current_category ?? "?"}</small>
+                                        </li>
+                                      ))}
+                                    {!assignSearching && assignResults.length === 0 && assignSearch.trim().length >= 2 && (
+                                      <li className="pair-assign-no-results">Sin resultados</li>
+                                    )}
+                                  </ul>
+                                )}
+                              </div>
+                              {!isTbd && (
+                                <button
+                                  className="pair-assign-tbd-btn"
+                                  onClick={() => handleAdminAssignPartner(reg.player_id, null)}
+                                  disabled={assigningAction}
+                                  title="Dejar como TBD"
+                                >
+                                  Dejar TBD
+                                </button>
+                              )}
+                              <button
+                                className="btn btn-secondary pair-assign-cancel"
+                                onClick={() => { setAssigningFor(null); setAssignSearch(""); setAssignResults([]); }}
+                                disabled={assigningAction}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              className="btn btn-secondary pair-assign-btn"
+                              onClick={() => {
+                                setAssigningFor(reg.player_id);
+                                setAssignSearch("");
+                                setAssignResults([]);
+                                setPairPanelError("");
+                              }}
+                            >
+                              {isTbd ? "Asignar pareja" : "Cambiar pareja"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* ── Sección finalizar evento ─────────────────────── */}
         {!isLocked && hasHistory && allCurrentSaved && (
           <section className="card coordinator-panel finalize-section">
@@ -631,6 +881,13 @@ function EventCoordinator() {
                 {finalizing ? "Finalizando…" : "Confirmar y finalizar"}
               </button>
             </div>
+
+            {roundsRemaining > 0 && (
+              <div className="finalize-early-warning">
+                ⚠️ Quedan <strong>{roundsRemaining} ronda{roundsRemaining !== 1 ? "s" : ""}</strong> configuradas sin jugar.
+                Estás finalizando el evento anticipadamente.
+              </div>
+            )}
 
             <p className="finalize-note">
               Las posiciones se determinan con las reglas de desempate:{" "}

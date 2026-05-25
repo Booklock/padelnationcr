@@ -13,9 +13,17 @@ const CATEGORY_LEVELS = {
 };
 
 const GENDER_OPTIONS = [
-  { value: "unspecified", label: "Prefiero no decir" },
+  { value: "",            label: "Seleccioná…" },
   { value: "male",        label: "Masculino" },
   { value: "female",      label: "Femenino" },
+  { value: "unspecified", label: "Prefiero no decir" },
+];
+
+const SIDE_OPTIONS = [
+  { value: "",      label: "Seleccioná…" },
+  { value: "right", label: "Derecha" },
+  { value: "left",  label: "Revés (izquierda)" },
+  { value: "both",  label: "Ambos lados" },
 ];
 
 function Register() {
@@ -24,13 +32,15 @@ function Register() {
 
   const [formData, setFormData] = useState({
     fullName:        "",
+    nickname:        "",
     email:           "",
     password:        "",
     confirmPassword: "",
     category:        "",
     level:           "",
     phone:           "",
-    gender:          "unspecified",
+    gender:          "",
+    preferredSide:   "",
   });
 
   const [error,      setError]      = useState("");
@@ -74,15 +84,25 @@ function Register() {
       setError("Seleccioná tu nivel dentro de la categoría.");
       return;
     }
+    if (!formData.phone.trim()) {
+      setError("El teléfono / WhatsApp es obligatorio.");
+      return;
+    }
+    if (!formData.gender) {
+      setError("Seleccioná tu género.");
+      return;
+    }
 
     setLoading(true);
 
     const { error: signUpError } = await signUp(formData.email, formData.password, {
-      fullName: formData.fullName,
-      phone:    formData.phone,
-      gender:   formData.gender,
-      category: formData.category,
-      level:    formData.level,
+      fullName:      formData.fullName,
+      nickname:      formData.nickname.trim() || null,
+      phone:         formData.phone,
+      gender:        formData.gender,
+      category:      formData.category,
+      level:         formData.level,
+      preferredSide: formData.preferredSide || null,
     });
 
     if (signUpError) {
@@ -221,13 +241,16 @@ function Register() {
               </div>
             </div>
 
-            {/* ── Datos adicionales ── */}
+            {/* ── Datos de contacto y perfil ── */}
             <div className="register-section">
-              <p className="register-section-label">Datos adicionales <span className="register-optional">(opcionales)</span></p>
+              <p className="register-section-label">Datos de contacto y perfil</p>
+              <p className="register-section-hint">
+                El teléfono y género son necesarios para la organización de torneos por categoría.
+              </p>
 
               <div className="register-grid">
                 <label className="form-field">
-                  <span>Teléfono / WhatsApp</span>
+                  <span>Teléfono / WhatsApp *</span>
                   <input
                     type="tel" name="phone"
                     placeholder="+506 8888 8888"
@@ -238,10 +261,30 @@ function Register() {
                 </label>
 
                 <label className="form-field">
-                  <span>Género</span>
-                  <select name="gender" value={formData.gender} onChange={handleChange}>
+                  <span>Género *</span>
+                  <select name="gender" value={formData.gender} onChange={handleChange} required>
                     {GENDER_OPTIONS.map((g) => (
                       <option key={g.value} value={g.value}>{g.label}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-field">
+                  <span>Apodo / Nickname <span className="register-optional">(opcional)</span></span>
+                  <input
+                    type="text" name="nickname"
+                    placeholder="Ej. Fabi, El Rayo…"
+                    value={formData.nickname}
+                    onChange={handleChange}
+                    maxLength={30}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Lado preferido <span className="register-optional">(opcional)</span></span>
+                  <select name="preferredSide" value={formData.preferredSide} onChange={handleChange}>
+                    {SIDE_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
                     ))}
                   </select>
                 </label>

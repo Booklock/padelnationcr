@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useProfile } from "../hooks/useProfile";
 import { cancelRegistration } from "../hooks/useRegistration";
+import { supabase } from "../lib/supabase";
 import { formatEventDate, formatEventTime, FORMAT_LABELS, STATUS_LABELS, getInitials } from "../utils/formatters";
-import PairSection from "../components/PairSection";
 import "./PlayerProfile.css";
 
 function PlayerProfile() {
@@ -12,8 +12,10 @@ function PlayerProfile() {
   const { profile, registrations, results, rankingInfo, loading, error, refetch } = useProfile();
 
   // ── Hooks deben ir ANTES de cualquier return condicional ──
-  const [cancellingId, setCancellingId] = useState(null);
-  const [cancelError,  setCancelError]  = useState(null);
+  const [cancellingId,     setCancellingId]     = useState(null);
+  const [cancelError,      setCancelError]      = useState(null);
+  const [pairActionId,     setPairActionId]     = useState(null); // event_id in progress
+  const [pairActionError,  setPairActionError]  = useState(null);
 
   if (loading) {
     return (
@@ -82,6 +84,31 @@ function PlayerProfile() {
     } finally {
       setCancellingId(null);
     }
+  }
+
+  async function handleConfirmPartner(eventId) {
+    setPairActionId(eventId);
+    setPairActionError(null);
+    const { data, error } = await supabase.rpc("confirm_pair_partner", { p_event_id: eventId });
+    if (error || data?.error) {
+      setPairActionError(error?.message ?? data.error);
+    } else {
+      await refetch();
+    }
+    setPairActionId(null);
+  }
+
+  async function handleRemovePartner(eventId) {
+    if (!window.confirm("¿Querés desasignarte de tu pareja en este evento? Ambos quedarán como TBD.")) return;
+    setPairActionId(eventId);
+    setPairActionError(null);
+    const { data, error } = await supabase.rpc("remove_pair_partner", { p_event_id: eventId });
+    if (error || data?.error) {
+      setPairActionError(error?.message ?? data.error);
+    } else {
+      await refetch();
+    }
+    setPairActionId(null);
   }
 
   return (
@@ -226,32 +253,71 @@ function PlayerProfile() {
                 </div>
               </div>
 
-              {cancelError && <p className="reg-error" style={{ marginBottom: 12 }}>{cancelError}</p>}
+              {cancelError   && <p className="reg-error"    style={{ marginBottom: 12 }}>{cancelError}</p>}
+              {pairActionError && <p className="reg-error" style={{ marginBottom: 12 }}>{pairActionError}</p>}
 
               {upcomingRegs.length === 0 ? (
                 <p className="profile-empty">No tenés eventos próximos.</p>
               ) : (
                 <div className="profile-events-list">
-                  {upcomingRegs.map((reg) => (
-                    <div className="profile-event-card" key={reg.id}>
-                      <div className="profile-event-card-top">
-                        <span className={`badge ${reg.status === "waitlist" ? "badge-waitlist" : ""}`}>
-                          {reg.status === "waitlist" ? `Lista de espera` : STATUS_LABELS[reg.events?.status] ?? "Confirmado"}
-                        </span>
-                        <button
-                          className="profile-leave-btn"
-                          onClick={() => handleLeaveEvent(reg.events?.id)}
-                          disabled={cancellingId === reg.events?.id}
-                          title="Salir del evento"
-                        >
-                          {cancellingId === reg.events?.id ? "…" : "Salir"}
-                        </button>
+                  {upcomingRegs.map((reg) => {
+                    const isPair       = reg.events?.pair_format;
+                    const hasPartner   = !!reg.pair_partner_id;
+                    const isConfirmed  = reg.pair_confirmed;
+                    const pairBusy     = pairActionId === reg.events?.id;
+                    return (
+                      <div className="profile-event-card" key={reg.id}>
+                        <div className="profile-event-card-top">
+                          <span className={`badge ${reg.status === "waitlist" ? "badge-waitlist" : ""}`}>
+                            {reg.status === "waitlist" ? "Lista de espera" : STATUS_LABELS[reg.events?.status] ?? "Confirmado"}
+                          </span>
+                          <button
+                            className="profile-leave-btn"
+                            onClick={() => handleLeaveEvent(reg.events?.id)}
+                            disabled={cancellingId === reg.events?.id || pairBusy}
+                            title="Salir del evento"
+                          >
+                            {cancellingId === reg.events?.id ? "…" : "Salir"}
+                          </button>
+                        </div>
+                        <h3>{reg.events?.title ?? "Evento"}</h3>
+                        <p>{formatEventDate(reg.events?.starts_at)} · {formatEventTime(reg.events?.starts_at)}</p>
+                        {reg.events?.location && <small>{reg.events.location}</small>}
+
+                        {/* Estado de pareja para eventos de parejas fijas */}
+                        {isPair && (
+                          <div className="profile-pair-status">
+                            {!hasPartner ? (
+                              <span className="pair-status-tbd">👥 Pareja: TBD</span>
+                            ) : isConfirmed ? (
+                              <span className="pair-status-ok">✓ Pareja confirmada</span>
+                            ) : (
+                              <span className="pair-status-pending">⏳ Esperando confirmación de pareja</span>
+                            )}
+                            {hasPartner && (
+                              <button
+                                className="pair-remove-btn"
+                                onClick={() => handleRemovePartner(reg.events?.id)}
+                                disabled={pairBusy}
+                                title="Desasignarse de la pareja — ambos quedan TBD"
+                              >
+                                {pairBusy ? "…" : "Desasignarme"}
+                              </button>
+                            )}
+                            {hasPartner && !isConfirmed && (
+                              <button
+                                className="btn btn-primary pair-confirm-btn"
+                                onClick={() => handleConfirmPartner(reg.events?.id)}
+                                disabled={pairBusy}
+                              >
+                                {pairBusy ? "…" : "Confirmar pareja"}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <h3>{reg.events?.title ?? "Evento"}</h3>
-                      <p>{formatEventDate(reg.events?.starts_at)} · {formatEventTime(reg.events?.starts_at)}</p>
-                      {reg.events?.location && <small>{reg.events.location}</small>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </article>
@@ -267,9 +333,6 @@ function PlayerProfile() {
             </article>
           </aside>
         </section>
-
-        {/* Pareja fija + retos */}
-        <PairSection />
 
       </div>
     </main>

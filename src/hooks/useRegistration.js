@@ -20,7 +20,7 @@ export function useMyRegistrations() {
 
     const { data } = await supabase
       .from("event_registrations")
-      .select("id, event_id, status, waitlist_position")
+      .select("id, event_id, status, waitlist_position, pair_partner_id, pair_confirmed")
       .eq("player_id", user.id)
       .neq("status", "cancelled");
 

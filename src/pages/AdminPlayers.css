@@ -288,6 +288,12 @@
   gap: 8px;
 }
 
+.ap-edit-extra-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
 .ap-reason-input {
   width: 100%;
   padding: 8px 10px;

@@ -1,15 +1,21 @@
 :root {
-  --color-white: #ffffff;
-  --color-deep-navy: #0a164a;
-  --color-graphite: #3b3a3c;
-  --color-lime: #dcfb00;
-  --color-carbon: #1e1e1f;
+  /* ── Paleta oficial Padel Nation CR ── */
+  --color-white:       #ffffff;
+  --color-black:       #000000;
+  --color-teal:        #003D3E;
+  --color-teal-dark:   #001F20;
+  --color-lime:        #DEFB00;
+  --color-chartreuse:  #CEF52F;
+  --color-carbon:      #1a1a1a;
+  --color-graphite:    #3b3a3c;
 
-  --color-bg: #0a164a;
-  --color-bg-dark: #1e1e1f;
-  --color-text: #ffffff;
-  --color-text-muted: #c7c7c7;
-  --color-border: rgba(255, 255, 255, 0.12);
+  --color-bg:          #003D3E;
+  --color-bg-dark:     #001F20;
+  /* alias legacy para CSS que aún lo referencian */
+  --color-deep-navy:   #003D3E;
+  --color-text:        #ffffff;
+  --color-text-muted:  #a8c4c4;
+  --color-border:      rgba(255, 255, 255, 0.12);
 
   --radius-sm: 8px;
   --radius-md: 14px;
@@ -32,8 +38,9 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at top right, rgba(220, 251, 0, 0.12), transparent 28%),
-    linear-gradient(135deg, var(--color-deep-navy), var(--color-carbon));
+    radial-gradient(circle at top right, rgba(222, 251, 0, 0.10), transparent 30%),
+    radial-gradient(circle at bottom left,  rgba(0, 61, 62, 0.6), transparent 50%),
+    linear-gradient(160deg, var(--color-teal), var(--color-teal-dark));
   color: var(--color-text);
 }
 

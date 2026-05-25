@@ -389,3 +389,205 @@
     font-size: 3rem;
   }
 }
+
+/* ── Estado de pareja en tarjeta de inscripción ── */
+.pair-reg-status {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 0;
+}
+
+.pair-reg-status.pair-tbd    { color: #f6ad55; }
+.pair-reg-status.pair-pending { color: #63b3ed; }
+.pair-reg-status.pair-ok      { color: #68d391; }
+
+/* ── Badge evento de parejas fijas ── */
+.event-pair-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(99, 179, 237, 0.12);
+  color: #63b3ed;
+  border: 1px solid rgba(99, 179, 237, 0.25);
+}
+
+/* ── Modal inscripción parejas ── */
+.pair-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.pair-modal {
+  width: 100%;
+  max-width: 500px;
+  padding: 28px;
+  display: grid;
+  gap: 20px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.pair-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.pair-modal-header h2 {
+  margin: 4px 0 0;
+}
+
+.pair-modal-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.pair-modal-close:hover { color: var(--color-white); }
+
+.pair-modal-desc {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.pair-modal-search-section {
+  display: grid;
+  gap: 10px;
+}
+
+.pair-modal-label {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--color-text-muted);
+}
+
+.pair-modal-search-wrap {
+  position: relative;
+}
+
+.pair-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-white);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.pair-modal-input:focus {
+  border-color: rgba(222, 251, 0, 0.55);
+}
+
+.pair-modal-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--color-bg-dark);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  list-style: none;
+  margin: 0; padding: 6px 0;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.pair-modal-searching,
+.pair-modal-no-results {
+  padding: 10px 14px;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+}
+
+.pair-modal-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  transition: background 0.1s;
+}
+
+.pair-modal-result-item:hover { background: rgba(222, 251, 0, 0.07); }
+
+.pair-modal-result-item strong { font-size: 0.9rem; }
+
+.pair-modal-result-item small {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.pair-modal-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(222, 251, 0, 0.07);
+  border: 1px solid rgba(222, 251, 0, 0.25);
+  border-radius: var(--radius-md);
+}
+
+.pair-modal-selected span {
+  font-size: 0.9rem;
+}
+
+.pair-modal-selected small {
+  color: var(--color-text-muted);
+}
+
+.pair-modal-clear {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.1s;
+  flex-shrink: 0;
+}
+
+.pair-modal-clear:hover { color: var(--color-white); }
+
+.pair-modal-hint {
+  font-size: 0.83rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.pair-modal-error {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.pair-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}

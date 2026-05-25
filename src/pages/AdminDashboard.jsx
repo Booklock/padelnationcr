@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useEvents } from "../hooks/useEvents";
-import { usePendingChallenges, getPairName } from "../hooks/usePairs";
 import { supabase } from "../lib/supabase";
 import { FORMAT_LABELS, formatEventDate, formatEventTime } from "../utils/formatters";
 import "./AdminDashboard.css";
@@ -231,6 +230,9 @@ function AdminDashboard() {
                 <Link className="quick-action" to="/admin/auditoria">
                   Registro de auditoría
                 </Link>
+                <Link className="quick-action" to="/admin/plantillas">
+                  Plantillas de eventos
+                </Link>
                 <Link className="quick-action" to="/admin/configuracion">
                   Configuración del sistema
                 </Link>
@@ -239,146 +241,9 @@ function AdminDashboard() {
 
           </div>
 
-          {/* Retos de parejas */}
-          <PairChallengesWidget />
-
         </div>
       </section>
     </main>
-  );
-}
-
-// ── Widget: retos de parejas pendientes / aceptados ──────────────────
-function PairChallengesWidget() {
-  const { challenges, pairsMap, profileMap, loading, refetch } = usePendingChallenges();
-
-  const [resolvingId,  setResolvingId]  = useState(null); // challenge id being resolved
-  const [winnerPairId, setWinnerPairId] = useState("");
-  const [resolving,    setResolving]    = useState(false);
-  const [resolveMsg,   setResolveMsg]   = useState("");
-
-  async function handleResolve(challengeId) {
-    if (!winnerPairId) { setResolveMsg("Seleccioná el ganador."); return; }
-    setResolving(true); setResolveMsg("");
-    const { error } = await supabase.rpc("resolve_pair_challenge", {
-      p_challenge_id:   challengeId,
-      p_winner_pair_id: winnerPairId,
-    });
-    if (error) {
-      setResolveMsg("❌ " + error.message);
-    } else {
-      setResolveMsg("✅ Reto resuelto. Puntos transferidos.");
-      setResolvingId(null);
-      setWinnerPairId("");
-      await refetch();
-    }
-    setResolving(false);
-  }
-
-  const pending  = challenges.filter((c) => c.status === "pending");
-  const accepted = challenges.filter((c) => c.status === "accepted");
-
-  if (loading) return null;
-  if (challenges.length === 0) return null;
-
-  return (
-    <section className="card admin-panel admin-challenges-widget">
-      <div className="panel-header">
-        <div>
-          <p className="section-kicker">Retos</p>
-          <h2>
-            Retos de parejas
-            {challenges.length > 0 && (
-              <span className="challenge-count-badge">{challenges.length}</span>
-            )}
-          </h2>
-        </div>
-        <Link className="btn btn-secondary" to="/ranking">Ver ranking</Link>
-      </div>
-
-      {resolveMsg && (
-        <p className={`challenge-widget-msg ${resolveMsg.startsWith("✅") ? "msg-ok" : "msg-err"}`}>
-          {resolveMsg}
-        </p>
-      )}
-
-      {accepted.length > 0 && (
-        <div className="challenge-group">
-          <p className="challenge-group-label">⚔️ Aceptados — esperando resultado</p>
-          {accepted.map((ch) => {
-            const chalName = getPairName(ch.challenger_pair_id, pairsMap, profileMap);
-            const challName = getPairName(ch.challenged_pair_id, pairsMap, profileMap);
-            const isResolving = resolvingId === ch.id;
-            return (
-              <div key={ch.id} className="challenge-row">
-                <div className="challenge-row-info">
-                  <span className="challenge-row-pairs">
-                    <strong>{chalName}</strong> vs <strong>{challName}</strong>
-                  </span>
-                  <span className="challenge-row-pts">🎯 {ch.points_wagered} pts</span>
-                </div>
-                {isResolving ? (
-                  <div className="challenge-resolve-form">
-                    <select
-                      value={winnerPairId}
-                      onChange={(e) => setWinnerPairId(e.target.value)}
-                      className="challenge-winner-select"
-                    >
-                      <option value="">Seleccioná el ganador…</option>
-                      <option value={ch.challenger_pair_id}>{chalName}</option>
-                      <option value={ch.challenged_pair_id}>{challName}</option>
-                    </select>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => handleResolve(ch.id)}
-                      disabled={resolving}
-                    >
-                      {resolving ? "Guardando…" : "Confirmar"}
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => { setResolvingId(null); setWinnerPairId(""); setResolveMsg(""); }}
-                      disabled={resolving}
-                    >
-                      Cancelar
-                    </button>
-                    {resolveMsg && <span className="challenge-resolve-err">{resolveMsg}</span>}
-                  </div>
-                ) : (
-                  <button
-                    className="challenge-resolve-btn"
-                    onClick={() => { setResolvingId(ch.id); setWinnerPairId(""); setResolveMsg(""); }}
-                  >
-                    Registrar resultado
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {pending.length > 0 && (
-        <div className="challenge-group">
-          <p className="challenge-group-label">⏳ Pendientes — esperando respuesta</p>
-          {pending.map((ch) => (
-            <div key={ch.id} className="challenge-row challenge-row-pending">
-              <div className="challenge-row-info">
-                <span className="challenge-row-pairs">
-                  <strong>{getPairName(ch.challenger_pair_id, pairsMap, profileMap)}</strong>
-                  {" → "}
-                  <strong>{getPairName(ch.challenged_pair_id, pairsMap, profileMap)}</strong>
-                </span>
-                <span className="challenge-row-pts">🎯 {ch.points_wagered} pts</span>
-              </div>
-              <span className="challenge-expires">
-                Expira {new Date(ch.expires_at).toLocaleDateString("es-CR")}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
 

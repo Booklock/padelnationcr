@@ -341,3 +341,52 @@
     align-items: flex-start;
   }
 }
+
+/* ── Estado de pareja en eventos de parejas fijas ── */
+.profile-pair-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.pair-status-tbd {
+  font-size: 0.82rem;
+  color: #f6ad55;
+  font-weight: 700;
+}
+
+.pair-status-ok {
+  font-size: 0.82rem;
+  color: #68d391;
+  font-weight: 700;
+}
+
+.pair-status-pending {
+  font-size: 0.82rem;
+  color: #63b3ed;
+  font-weight: 700;
+}
+
+.pair-remove-btn {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: transparent;
+  color: #f87171;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pair-remove-btn:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.pair-confirm-btn {
+  font-size: 0.78rem;
+  padding: 5px 12px;
+}

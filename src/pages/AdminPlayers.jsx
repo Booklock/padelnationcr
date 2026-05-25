@@ -42,7 +42,7 @@ function AdminPlayers() {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, full_name, email, phone, gender, current_category, current_level, role, no_show_count, suspended_until, suspension_reason, created_at")
+      .select("id, full_name, email, phone, gender, current_category, current_level, nickname, preferred_side, role, no_show_count, suspended_until, suspension_reason, created_at")
       .order("full_name", { ascending: true });
 
     if (!error) setPlayers(data ?? []);
@@ -82,10 +82,13 @@ function AdminPlayers() {
   // ── Iniciar edición ──
   function startEdit(player) {
     setEditing({
-      id:       player.id,
-      category: player.current_category ?? "",
-      level:    player.current_level    ?? "",
-      reason:   "",
+      id:            player.id,
+      category:      player.current_category ?? "",
+      level:         player.current_level    ?? "",
+      phone:         player.phone            ?? "",
+      nickname:      player.nickname         ?? "",
+      preferredSide: player.preferred_side   ?? "",
+      reason:        "",
     });
     setSaveError("");
     setSaveOk("");
@@ -104,7 +107,7 @@ function AdminPlayers() {
     }));
   }
 
-  // ── Guardar cambio de categoría (via RPC con auditoría) ──
+  // ── Guardar cambios (perfil + categoría/nivel con auditoría) ──
   async function saveEdit() {
     if (!editing.category) { setSaveError("Seleccioná una categoría."); return; }
     if (!editing.level)    { setSaveError("Seleccioná un nivel.");      return; }
@@ -113,30 +116,55 @@ function AdminPlayers() {
     setSaveError("");
     setSaveOk("");
 
-    const { error } = await supabase.rpc("update_player_category", {
-      p_player_id: editing.id,
-      p_category:  editing.category,
-      p_level:     editing.level,
-      p_reason:    editing.reason || null,
-    });
+    try {
+      const original   = players.find((p) => p.id === editing.id);
+      const catChanged = editing.category !== (original?.current_category ?? "")
+                      || editing.level    !== (original?.current_level    ?? "");
 
-    if (error) {
-      setSaveError("Error al actualizar: " + error.message);
+      // 1. Campos de perfil directos (phone, nickname, preferred_side)
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .update({
+          phone:          editing.phone.trim()    || null,
+          nickname:       editing.nickname.trim() || null,
+          preferred_side: editing.preferredSide   || null,
+        })
+        .eq("id", editing.id);
+      if (profileErr) throw profileErr;
+
+      // 2. Categoría/nivel — solo si cambiaron (mantiene auditoría)
+      if (catChanged) {
+        const { error: catErr } = await supabase.rpc("update_player_category", {
+          p_player_id: editing.id,
+          p_category:  editing.category,
+          p_level:     editing.level,
+          p_reason:    editing.reason || null,
+        });
+        if (catErr) throw catErr;
+      }
+
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.id === editing.id
+            ? {
+                ...p,
+                phone:            editing.phone.trim()    || null,
+                nickname:         editing.nickname.trim() || null,
+                preferred_side:   editing.preferredSide   || null,
+                current_category: editing.category,
+                current_level:    editing.level,
+              }
+            : p
+        )
+      );
+
+      setSaveOk("Cambios guardados.");
+      setEditing(null);
+    } catch (err) {
+      setSaveError("Error al actualizar: " + err.message);
+    } finally {
       setSaving(false);
-      return;
     }
-
-    setPlayers((prev) =>
-      prev.map((p) =>
-        p.id === editing.id
-          ? { ...p, current_category: editing.category, current_level: editing.level }
-          : p
-      )
-    );
-
-    setSaveOk("Cambios guardados.");
-    setSaving(false);
-    setEditing(null);
   }
 
   const availableLevels = editing
@@ -251,13 +279,40 @@ function AdminPlayers() {
                         </td>
                         <td colSpan={3}>
                           <div className="ap-edit-actions">
-                            <input
-                              className="ap-reason-input"
-                              type="text"
-                              placeholder="Motivo (opcional)"
-                              value={editing.reason}
-                              onChange={(e) => handleEditChange("reason", e.target.value)}
-                            />
+                            <div className="ap-edit-extra-fields">
+                              <input
+                                className="ap-reason-input"
+                                type="tel"
+                                placeholder="Teléfono / WhatsApp"
+                                value={editing.phone}
+                                onChange={(e) => handleEditChange("phone", e.target.value)}
+                              />
+                              <input
+                                className="ap-reason-input"
+                                type="text"
+                                placeholder="Apodo (opcional)"
+                                maxLength={30}
+                                value={editing.nickname}
+                                onChange={(e) => handleEditChange("nickname", e.target.value)}
+                              />
+                              <select
+                                className="ap-inline-select"
+                                value={editing.preferredSide}
+                                onChange={(e) => handleEditChange("preferredSide", e.target.value)}
+                              >
+                                <option value="">Lado preferido…</option>
+                                <option value="right">Derecha</option>
+                                <option value="left">Revés</option>
+                                <option value="both">Ambos</option>
+                              </select>
+                              <input
+                                className="ap-reason-input"
+                                type="text"
+                                placeholder="Motivo cambio cat. (opcional)"
+                                value={editing.reason}
+                                onChange={(e) => handleEditChange("reason", e.target.value)}
+                              />
+                            </div>
                             {saveError && <span className="ap-save-error">{saveError}</span>}
                             <div className="ap-edit-btns">
                               <button

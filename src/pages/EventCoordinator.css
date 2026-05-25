@@ -299,6 +299,16 @@
   margin-top: 22px;
 }
 
+.finalize-early-warning {
+  background: rgba(251, 191, 36, 0.10);
+  border: 1px solid rgba(251, 191, 36, 0.30);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: #fbbf24;
+  font-size: 0.9rem;
+  margin-bottom: 14px;
+}
+
 .finalize-note {
   color: var(--color-text-muted);
   line-height: 1.7;
@@ -459,4 +469,210 @@
 .attendance-toggle:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ── Badge parejas fijas (en event summary) ── */
+.event-pair-badge-sm {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(99, 179, 237, 0.12);
+  color: #63b3ed;
+  border: 1px solid rgba(99, 179, 237, 0.25);
+  align-self: flex-start;
+}
+
+/* ── Gestión de parejas fijas ── */
+.pair-mgmt-section {
+  padding: 24px;
+}
+
+.pair-mgmt-note {
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.pair-mgmt-error {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+}
+
+.pair-mgmt-loading,
+.pair-mgmt-empty {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  padding: 12px 0;
+}
+
+.pair-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pair-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pair-row-tbd {
+  border-color: rgba(246, 173, 85, 0.3);
+  background: rgba(246, 173, 85, 0.05);
+}
+
+.pair-row-pending {
+  border-color: rgba(99, 179, 237, 0.25);
+  background: rgba(99, 179, 237, 0.04);
+}
+
+.pair-row-ok {
+  border-color: rgba(104, 211, 145, 0.2);
+}
+
+.pair-row-player {
+  display: grid;
+  gap: 2px;
+}
+
+.pair-row-player strong { font-size: 0.9rem; }
+.pair-row-player small  { color: var(--color-text-muted); font-size: 0.8rem; }
+
+.pair-row-partner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pair-tag-tbd {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #f6ad55;
+  background: rgba(246, 173, 85, 0.12);
+  border: 1px solid rgba(246, 173, 85, 0.3);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.pair-tag-pending {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #63b3ed;
+}
+
+.pair-tag-ok {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #68d391;
+}
+
+.pair-row-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.pair-assign-btn {
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.pair-assign-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.pair-assign-search-wrap {
+  position: relative;
+}
+
+.pair-assign-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-white);
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.pair-assign-input:focus {
+  border-color: rgba(222, 251, 0, 0.5);
+}
+
+.pair-assign-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--color-bg-dark);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  list-style: none;
+  margin: 0; padding: 4px 0;
+  z-index: 50;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.pair-assign-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  transition: background 0.1s;
+}
+
+.pair-assign-item:hover { background: rgba(222, 251, 0, 0.07); }
+.pair-assign-item strong { font-size: 0.88rem; }
+.pair-assign-item small  { color: var(--color-text-muted); font-size: 0.78rem; }
+
+.pair-assign-searching,
+.pair-assign-no-results {
+  padding: 8px 12px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.pair-assign-tbd-btn {
+  font-size: 0.8rem;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(246, 173, 85, 0.35);
+  background: transparent;
+  color: #f6ad55;
+  cursor: pointer;
+  transition: background 0.15s;
+  align-self: flex-start;
+}
+
+.pair-assign-tbd-btn:hover:not(:disabled) {
+  background: rgba(246, 173, 85, 0.1);
+}
+
+.pair-assign-cancel {
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  align-self: flex-start;
+}
+
+@media (max-width: 680px) {
+  .pair-row {
+    grid-template-columns: 1fr;
+  }
 }

@@ -25,10 +25,10 @@ export function useProfile() {
     setLoading(true);
     try {
       const [regsRes, resultsRes, rankRes] = await Promise.all([
-        // Próximos eventos inscritos
+        // Próximos eventos inscritos (incluye info de pareja)
         supabase
           .from("event_registrations")
-          .select("id, status, registered_at, events(id, title, starts_at, location, format, status, category_code)")
+          .select("id, status, registered_at, pair_partner_id, pair_confirmed, events(id, title, starts_at, location, format, status, category_code, pair_format)")
           .eq("player_id", user.id)
           .neq("status", "cancelled")
           .order("registered_at", { ascending: false }),

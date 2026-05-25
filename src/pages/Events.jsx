@@ -1,10 +1,149 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useEvents } from "../hooks/useEvents";
 import { useMyRegistrations, registerForEvent, cancelRegistration } from "../hooks/useRegistration";
+import { supabase } from "../lib/supabase";
 import { FORMAT_LABELS, STATUS_LABELS, STATUS_CLASS, GENDER_FILTER_LABELS, GENDER_FILTER_CLASS, formatEventDate, formatEventTime } from "../utils/formatters";
 import "./Events.css";
+
+/* ── Modal de inscripción para eventos de parejas fijas ──────────── */
+function PairRegModal({ event, onClose, onSuccess }) {
+  const [searchQuery,   setSearchQuery]   = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedPartner, setSelectedPartner] = useState(null);
+  const [searching,     setSearching]     = useState(false);
+  const [submitting,    setSubmitting]    = useState(false);
+  const [error,         setError]         = useState("");
+  const searchRef = useRef(null);
+  const debounceTimer = useRef(null);
+
+  // Búsqueda de jugadores con debounce
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(async () => {
+      setSearching(true);
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, current_level, current_category")
+        .ilike("full_name", `%${searchQuery.trim()}%`)
+        .eq("role", "player")
+        .eq("is_active", true)
+        .limit(8);
+      setSearchResults(data ?? []);
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(debounceTimer.current);
+  }, [searchQuery]);
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    setError("");
+    const { data, error: rpcErr } = await supabase.rpc("register_for_event_pair", {
+      p_event_id:   event.id,
+      p_partner_id: selectedPartner?.id ?? null,
+    });
+    setSubmitting(false);
+    if (rpcErr) { setError(rpcErr.message); return; }
+    if (data?.error) { setError(data.error); return; }
+    onSuccess(data);
+  }
+
+  const pairCount = Math.floor((event.player_limit ?? 16) / 2);
+
+  return (
+    <div className="pair-modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="pair-modal card">
+        <div className="pair-modal-header">
+          <div>
+            <p className="section-kicker">Parejas fijas</p>
+            <h2>Inscripción en pareja</h2>
+          </div>
+          <button className="pair-modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
+        </div>
+
+        <p className="pair-modal-desc">
+          Este evento es de <strong>parejas fijas</strong> ({pairCount} parejas en total).
+          Podés inscribirte ahora y buscar pareja después, o indicar tu pareja de inmediato.
+        </p>
+
+        {/* Búsqueda de pareja */}
+        <div className="pair-modal-search-section">
+          <label className="pair-modal-label">
+            Buscar pareja (opcional)
+          </label>
+          {selectedPartner ? (
+            <div className="pair-modal-selected">
+              <span>
+                <strong>{selectedPartner.full_name}</strong>
+                <small> · Nivel {selectedPartner.current_level ?? "?"} · Cat. {selectedPartner.current_category ?? "?"}</small>
+              </span>
+              <button
+                className="pair-modal-clear"
+                onClick={() => { setSelectedPartner(null); setSearchQuery(""); }}
+              >✕</button>
+            </div>
+          ) : (
+            <div className="pair-modal-search-wrap" ref={searchRef}>
+              <input
+                className="pair-modal-input"
+                type="text"
+                placeholder="Escribí el nombre del jugador…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+              {(searching || searchResults.length > 0) && (
+                <ul className="pair-modal-results">
+                  {searching && (
+                    <li className="pair-modal-searching">Buscando…</li>
+                  )}
+                  {!searching && searchResults.map((p) => (
+                    <li
+                      key={p.id}
+                      className="pair-modal-result-item"
+                      onClick={() => { setSelectedPartner(p); setSearchResults([]); setSearchQuery(""); }}
+                    >
+                      <strong>{p.full_name}</strong>
+                      <small>Nivel {p.current_level ?? "?"} · Cat. {p.current_category ?? "?"}</small>
+                    </li>
+                  ))}
+                  {!searching && searchResults.length === 0 && searchQuery.trim().length >= 2 && (
+                    <li className="pair-modal-no-results">Sin resultados para "{searchQuery}"</li>
+                  )}
+                </ul>
+              )}
+            </div>
+          )}
+          <small className="pair-modal-hint">
+            {selectedPartner
+              ? "Tu pareja recibirá una notificación para confirmar. Si no confirma, podés reasignarla desde tu perfil."
+              : "Si no seleccionás pareja ahora, quedás como TBD. El admin puede asignarte una antes de que empiece el evento."}
+          </small>
+        </div>
+
+        {error && <p className="pair-modal-error">{error}</p>}
+
+        <div className="pair-modal-actions">
+          <button className="btn btn-secondary" onClick={onClose} disabled={submitting}>
+            Cancelar
+          </button>
+          <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+            {submitting
+              ? "Inscribiendo…"
+              : selectedPartner
+                ? `Inscribirme con ${selectedPartner.full_name}`
+                : "Inscribirme (TBD)"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const CATEGORIES     = ["Todos", "AA", "A", "B", "C", "D"];
 const FORMATS        = ["Todos", "Mexicano", "Americano", "Reto", "Torneo"];
@@ -44,6 +183,8 @@ function Events() {
   const [actionEventId, setActionEventId] = useState(null);
   // Mensajes de error/info por event_id
   const [actionMsgs, setActionMsgs] = useState({});
+  // Modal de inscripción para eventos de pareja
+  const [pairModalEvent, setPairModalEvent] = useState(null);
 
   const activeCount = useMemo(
     () => events.filter((e) => e.status === "open" || e.status === "almost_full").length,
@@ -84,12 +225,19 @@ function Events() {
     setActionMsgs((prev) => { const n = { ...prev }; delete n[eventId]; return n; });
   }
 
-  async function handleRegister(eventId) {
+  async function handleRegister(event) {
     if (!user) {
       navigate("/login", { state: { from: { pathname: "/eventos" } } });
       return;
     }
 
+    // Eventos de parejas fijas → modal especial
+    if (event.pair_format) {
+      setPairModalEvent(event);
+      return;
+    }
+
+    const eventId = event.id;
     setActionEventId(eventId);
     clearMsg(eventId);
 
@@ -112,6 +260,11 @@ function Events() {
     } finally {
       setActionEventId(null);
     }
+  }
+
+  async function handlePairRegSuccess() {
+    setPairModalEvent(null);
+    await Promise.all([refetchEvents(), refetchRegs()]);
   }
 
   async function handleCancel(eventId) {
@@ -258,6 +411,9 @@ function Events() {
                   <article className="event-page-card card" key={event.id}>
                     <div className="event-page-card-header">
                       <span className="badge">{FORMAT_LABELS[event.format] ?? event.format}</span>
+                      {event.pair_format && (
+                        <span className="event-pair-badge">👥 Parejas fijas</span>
+                      )}
                       {gfLabel && (
                         <span className={`event-gender-badge ${gfClass}`}>{gfLabel}</span>
                       )}
@@ -324,6 +480,17 @@ function Events() {
                             : `Lista de espera #${myReg.waitlist_position}`}
                         </span>
 
+                        {/* Estado de pareja para eventos de parejas */}
+                        {event.pair_format && myReg.status === "confirmed" && (
+                          <span className={`pair-reg-status ${myReg.pair_partner_id ? (myReg.pair_confirmed ? "pair-ok" : "pair-pending") : "pair-tbd"}`}>
+                            {!myReg.pair_partner_id
+                              ? "👥 Pareja: TBD"
+                              : myReg.pair_confirmed
+                                ? "✓ Pareja confirmada"
+                                : "⏳ Confirmar pareja — revisá tu perfil"}
+                          </span>
+                        )}
+
                         {msg && (
                           <p className={msg.type === "error" ? "reg-error" : "reg-info"}>
                             {msg.text}
@@ -368,10 +535,10 @@ function Events() {
                       <div className="reg-action-area">
                         <button
                           className="btn btn-primary event-register-btn"
-                          onClick={() => handleRegister(event.id)}
+                          onClick={() => handleRegister(event)}
                           disabled={isBusy || regsLoading}
                         >
-                          {isBusy ? "Inscribiendo…" : "Inscribirme"}
+                          {isBusy ? "Inscribiendo…" : event.pair_format ? "Inscribirme en pareja" : "Inscribirme"}
                         </button>
 
                         {msg && (
@@ -388,6 +555,15 @@ function Events() {
           )}
         </section>
       </div>
+
+      {/* Modal inscripción parejas */}
+      {pairModalEvent && (
+        <PairRegModal
+          event={pairModalEvent}
+          onClose={() => setPairModalEvent(null)}
+          onSuccess={handlePairRegSuccess}
+        />
+      )}
     </main>
   );
 }

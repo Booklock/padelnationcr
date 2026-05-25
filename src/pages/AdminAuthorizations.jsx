@@ -33,14 +33,31 @@ export default function AdminAuthorizations() {
   const [granting,        setGranting]        = useState(false);
   const [grantMsg,        setGrantMsg]        = useState("");
 
-  // ── Revoke ───────────────────────────────────────────────────────
+  // ── Revoke (categoría) ───────────────────────────────────────────
   const [revokingId, setRevokingId] = useState(null);
   const [revokeMsg,  setRevokeMsg]  = useState("");
+
+  // ── Estado excepciones de género ─────────────────────────────────
+  const [genderExcs,     setGenderExcs]     = useState([]);
+  const [geLoading,      setGeLoading]      = useState(true);
+  const [geProfileMap,   setGeProfileMap]   = useState({});
+  const [geEventsMap,    setGeEventsMap]    = useState({});
+  const [geSearch,       setGeSearch]       = useState("");
+  const [geResults,      setGeResults]      = useState([]);
+  const [gePlayer,       setGePlayer]       = useState(null);
+  const [geEventId,      setGeEventId]      = useState("");
+  const [geNotes,        setGeNotes]        = useState("");
+  const [geGranting,     setGeGranting]     = useState(false);
+  const [geGrantMsg,     setGeGrantMsg]     = useState("");
+  const [geRevokingId,   setGeRevokingId]   = useState(null);
+  const [genderedEvents, setGenderedEvents] = useState([]);
 
   useEffect(() => {
     if (!isAdmin) { navigate("/no-autorizado"); return; }
     loadData();
     loadUpcomingEvents();
+    loadGenderExceptions();
+    loadGenderedEvents();
   }, [isAdmin]);
 
   // Player search debounce
@@ -140,6 +157,96 @@ export default function AdminAuthorizations() {
     else       await loadData();
     setRevokingId(null);
   }
+
+  // ── Excepciones de género — funciones ────────────────────────────
+  const loadGenderExceptions = useCallback(async () => {
+    setGeLoading(true);
+    const { data } = await supabase
+      .from("gender_exception_authorizations")
+      .select("*")
+      .is("revoked_at", null)
+      .order("granted_at", { ascending: false });
+
+    const excs = data ?? [];
+    setGenderExcs(excs);
+
+    const pIds = [...new Set([...excs.map((e) => e.player_id), ...excs.map((e) => e.granted_by)])];
+    if (pIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles").select("id, full_name, email").in("id", pIds);
+      setGeProfileMap(Object.fromEntries((profs ?? []).map((p) => [p.id, p])));
+    }
+    const eIds = excs.map((e) => e.event_id).filter(Boolean);
+    if (eIds.length > 0) {
+      const { data: evs } = await supabase
+        .from("events").select("id, title, gender_filter, starts_at").in("id", eIds);
+      setGeEventsMap(Object.fromEntries((evs ?? []).map((e) => [e.id, e])));
+    }
+    setGeLoading(false);
+  }, []);
+
+  async function loadGenderedEvents() {
+    const { data } = await supabase
+      .from("events")
+      .select("id, title, gender_filter, category_code, starts_at")
+      .in("gender_filter", ["male", "female"])
+      .in("status", ["open", "almost_full", "draft"])
+      .order("starts_at", { ascending: true })
+      .limit(50);
+    setGenderedEvents(data ?? []);
+  }
+
+  // Debounce búsqueda de jugador para excepciones género
+  useEffect(() => {
+    if (geSearch.trim().length < 2) { setGeResults([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, gender, current_category")
+        .ilike("full_name", `%${geSearch}%`)
+        .eq("role", "player")
+        .eq("is_active", true)
+        .limit(7);
+      setGeResults(data ?? []);
+    }, 320);
+    return () => clearTimeout(t);
+  }, [geSearch]);
+
+  async function handleGrantGenderException() {
+    if (!gePlayer || !geEventId) {
+      setGeGrantMsg("❌ Seleccioná un jugador y un evento.");
+      return;
+    }
+    setGeGranting(true); setGeGrantMsg("");
+    const { data, error } = await supabase.rpc("grant_gender_exception", {
+      p_player_id: gePlayer.id,
+      p_event_id:  geEventId,
+      p_notes:     geNotes || null,
+    });
+    if (error || data?.error) {
+      setGeGrantMsg("❌ " + (data?.error ?? error.message));
+    } else {
+      setGeGrantMsg("✅ Excepción otorgada.");
+      setGeSearch(""); setGePlayer(null); setGeEventId(""); setGeNotes("");
+      setGeResults([]);
+      await loadGenderExceptions();
+    }
+    setGeGranting(false);
+  }
+
+  async function handleRevokeGenderException(excId) {
+    if (!window.confirm("¿Revocar esta excepción de género?")) return;
+    setGeRevokingId(excId);
+    const { data, error } = await supabase.rpc("revoke_gender_exception", { p_exception_id: excId });
+    if (error || data?.error) {
+      setGeGrantMsg("❌ " + (data?.error ?? error.message));
+    } else {
+      await loadGenderExceptions();
+    }
+    setGeRevokingId(null);
+  }
+
+  const GENDER_FILTER_LABELS_ES = { male: "Masculino", female: "Femenino", mixed: "Mixto" };
 
   // Suggest categories above player's current
   const eligibleCategories = selectedPlayer
@@ -360,6 +467,157 @@ export default function AdminAuthorizations() {
           </section>
 
         </div>
+
+        {/* ── Excepciones de género ── */}
+        <div className="auth-admin-gender-block">
+          <div className="auth-admin-header" style={{ marginTop: 48 }}>
+            <div>
+              <p className="section-kicker">Excepciones</p>
+              <h2 className="section-title" style={{ fontSize: "1.6rem" }}>Excepciones de género</h2>
+              <p className="section-description">
+                Autorizá a un jugador a inscribirse en un evento cuyo filtro de género no coincide con el suyo
+                (ej. una mujer en un evento masculino, o viceversa).
+              </p>
+            </div>
+          </div>
+
+          {geGrantMsg && (
+            <p className={`aa-msg ${geGrantMsg.startsWith("✅") ? "aa-msg-ok" : "aa-msg-err"}`} style={{ marginBottom: 18 }}>
+              {geGrantMsg}
+            </p>
+          )}
+
+          <div className="auth-admin-layout">
+
+            {/* Formulario */}
+            <section className="card auth-admin-form-card">
+              <p className="section-kicker">Nueva excepción</p>
+              <h2>Otorgar excepción de género</h2>
+
+              {/* Player search */}
+              <div className="aa-field">
+                <label>Jugador *</label>
+                <div className="aa-search-wrap">
+                  <input
+                    type="search" className="aa-input"
+                    placeholder="Buscá por nombre…"
+                    value={geSearch}
+                    onChange={(e) => { setGeSearch(e.target.value); setGePlayer(null); }}
+                  />
+                  {geResults.length > 0 && !gePlayer && (
+                    <ul className="aa-search-results">
+                      {geResults.map((p) => (
+                        <li key={p.id} className="aa-search-item"
+                          onClick={() => { setGePlayer(p); setGeSearch(p.full_name); setGeResults([]); }}
+                        >
+                          <strong>{p.full_name}</strong>
+                          <small>
+                            {p.email} · Género: {p.gender === "male" ? "Masc." : p.gender === "female" ? "Fem." : "No espec."}
+                          </small>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {gePlayer && (
+                  <div className="aa-selected-player">
+                    <span>
+                      ✅ <strong>{gePlayer.full_name}</strong>
+                      {" "}— género: <strong>{gePlayer.gender === "male" ? "Masculino" : gePlayer.gender === "female" ? "Femenino" : "No especificado"}</strong>
+                    </span>
+                    <button className="aa-clear-btn" onClick={() => { setGePlayer(null); setGeSearch(""); }}>✕</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Evento */}
+              <div className="aa-field">
+                <label>Evento con filtro de género *</label>
+                <select className="aa-input" value={geEventId} onChange={(e) => setGeEventId(e.target.value)}>
+                  <option value="">Seleccioná un evento…</option>
+                  {genderedEvents.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.title} · {GENDER_FILTER_LABELS_ES[e.gender_filter] ?? e.gender_filter} · Cat. {e.category_code}
+                    </option>
+                  ))}
+                </select>
+                {genderedEvents.length === 0 && (
+                  <small className="aa-hint">No hay eventos con filtro de género próximos.</small>
+                )}
+              </div>
+
+              {/* Notas */}
+              <div className="aa-field">
+                <label>Notas internas (opcional)</label>
+                <input
+                  type="text" className="aa-input"
+                  placeholder="Motivo de la excepción…"
+                  value={geNotes}
+                  onChange={(e) => setGeNotes(e.target.value)}
+                  maxLength={200}
+                />
+              </div>
+
+              <button
+                className="btn btn-primary"
+                onClick={handleGrantGenderException}
+                disabled={geGranting || !gePlayer || !geEventId}
+              >
+                {geGranting ? "Guardando…" : "Otorgar excepción"}
+              </button>
+            </section>
+
+            {/* Lista */}
+            <section className="card auth-admin-list-card">
+              <p className="section-kicker">Activas</p>
+              <h2>Excepciones vigentes</h2>
+
+              {geLoading ? (
+                <p className="aa-empty">Cargando…</p>
+              ) : genderExcs.length === 0 ? (
+                <p className="aa-empty">No hay excepciones de género activas.</p>
+              ) : (
+                <div className="aa-auth-list">
+                  {genderExcs.map((exc) => {
+                    const player  = geProfileMap[exc.player_id];
+                    const grantor = geProfileMap[exc.granted_by];
+                    const ev      = geEventsMap[exc.event_id];
+                    return (
+                      <div key={exc.id} className="aa-auth-card">
+                        <div className="aa-auth-top">
+                          <div>
+                            <strong className="aa-auth-player">{player?.full_name ?? "—"}</strong>
+                            <span className="aa-auth-current">
+                              Autorizado en{" "}
+                              <strong className="aa-cat-badge">
+                                {ev?.title ?? exc.event_id}
+                              </strong>
+                              {ev && <small> · {GENDER_FILTER_LABELS_ES[ev.gender_filter]}</small>}
+                            </span>
+                          </div>
+                          <span className="aa-badge aa-badge-active">Activa</span>
+                        </div>
+                        <div className="aa-auth-meta">
+                          {exc.notes && <span>📝 {exc.notes}</span>}
+                          <span className="aa-auth-grantor">Otorgada por {grantor?.full_name ?? "admin"}</span>
+                        </div>
+                        <button
+                          className="aa-revoke-btn"
+                          onClick={() => handleRevokeGenderException(exc.id)}
+                          disabled={geRevokingId === exc.id}
+                        >
+                          {geRevokingId === exc.id ? "Revocando…" : "Revocar"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+          </div>
+        </div>
+
       </div>
     </main>
   );

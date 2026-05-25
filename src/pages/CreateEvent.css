@@ -262,6 +262,21 @@
   color: var(--color-lime);
 }
 
+.calculation-total {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.calculation-total span {
+  color: var(--color-text) !important;
+  font-weight: 800 !important;
+}
+
+.calculation-total strong {
+  font-size: 1.1rem;
+}
+
 /* ── Criterio de fin de partido hint ── */
 .criterion-hint {
   background: rgba(255, 255, 255, 0.05);
@@ -366,4 +381,156 @@
   .create-event-format-card strong {
     font-size: 2.2rem;
   }
+}
+
+/* ── Mensaje de plantilla ── */
+.template-msg {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.template-msg-ok {
+  background: rgba(74, 222, 128, 0.10);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  color: #4ade80;
+}
+
+.template-msg-err {
+  background: rgba(248, 113, 113, 0.10);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: #f87171;
+}
+
+/* ── Selector de niveles (pills) ── */
+.level-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.level-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.level-cat-btn {
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  min-width: 44px;
+  text-align: center;
+}
+
+.level-cat-btn.active,
+.level-cat-btn:hover {
+  background: rgba(222, 251, 0, 0.14);
+  border-color: rgba(222, 251, 0, 0.5);
+  color: var(--color-lime);
+}
+
+.level-pill {
+  padding: 5px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.level-pill.active {
+  background: var(--color-lime);
+  border-color: var(--color-lime);
+  color: #001F20;
+}
+
+.level-pill:hover:not(.active) {
+  border-color: rgba(222, 251, 0, 0.4);
+  color: var(--color-text);
+}
+
+.level-hint {
+  color: var(--color-text-muted);
+  font-size: 0.83rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.level-hint strong {
+  color: var(--color-lime);
+}
+
+/* ── Toggle parejas fijas ── */
+.pair-format-toggle {
+  grid-column: 1 / -1;
+}
+
+.pair-format-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pair-format-switch input[type="checkbox"] {
+  display: none;
+}
+
+.pair-format-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.pair-format-slider::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: var(--color-text-muted);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.pair-format-switch input:checked ~ .pair-format-slider {
+  background: rgba(222, 251, 0, 0.2);
+  border-color: rgba(222, 251, 0, 0.5);
+}
+
+.pair-format-switch input:checked ~ .pair-format-slider::after {
+  transform: translateX(20px);
+  background: var(--color-lime);
+}
+
+.pair-format-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.pair-format-switch input:checked ~ .pair-format-label {
+  color: var(--color-lime);
 }

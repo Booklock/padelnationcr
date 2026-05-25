@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import logoUrl from "../assets/logo.png";
 import "./Navbar.css";
 
 function Navbar() {
@@ -26,11 +27,7 @@ function Navbar() {
     <header className="navbar">
       <div className="container navbar-content">
         <Link to="/" className="brand" onClick={closeMenu}>
-          <span className="brand-mark">PN</span>
-          <span className="brand-text">
-            <strong>Padel Nation</strong>
-            <small>CR</small>
-          </span>
+          <img src={logoUrl} alt="Padel Nation CR" className="brand-logo" />
         </Link>
 
         <nav className={isMenuOpen ? "nav-links open" : "nav-links"}>

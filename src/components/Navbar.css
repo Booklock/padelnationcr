@@ -2,8 +2,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(10, 22, 74, 0.82);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(0, 31, 32, 0.88);
+  border-bottom: 1px solid rgba(222, 251, 0, 0.12);
   backdrop-filter: blur(18px);
 }
 
@@ -19,35 +19,14 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
-.brand-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--color-lime);
-  color: var(--color-carbon);
-  display: grid;
-  place-items: center;
-  font-weight: 950;
-  letter-spacing: -0.08em;
-}
-
-.brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-.brand-text strong {
-  font-size: 1.02rem;
-}
-
-.brand-text small {
-  color: var(--color-lime);
-  font-weight: 800;
-  margin-top: 4px;
+.brand-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  /* El logo tiene fondo oscuro — le damos un pequeño margen vertical */
+  display: block;
 }
 
 .nav-links {
@@ -126,8 +105,8 @@
     top: calc(100% + 12px);
     left: 0;
     right: 0;
-    background: rgba(10, 22, 74, 0.98);
-    border: 1px solid var(--color-border);
+    background: rgba(0, 31, 32, 0.98);
+    border: 1px solid rgba(222, 251, 0, 0.12);
     border-radius: 22px;
     padding: 16px;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
@@ -164,12 +143,7 @@
     min-height: 68px;
   }
 
-  .brand-text strong {
-    font-size: 0.92rem;
-  }
-
-  .brand-mark {
-    width: 40px;
+  .brand-logo {
     height: 40px;
   }
 }

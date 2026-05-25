@@ -21,6 +21,7 @@ import AdminAuthorizations from "./pages/AdminAuthorizations";
 import AdminExclusions from "./pages/AdminExclusions";
 import AdminAudit from "./pages/AdminAudit";
 import AdminSettings from "./pages/AdminSettings";
+import AdminTemplates from "./pages/AdminTemplates";
 
 function App() {
   return (
@@ -116,6 +117,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                     <AdminSettings />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/plantillas"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                    <AdminTemplates />
                   </ProtectedRoute>
                 }
               />

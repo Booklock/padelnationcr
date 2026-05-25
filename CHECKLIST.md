@@ -55,6 +55,15 @@
 - [ ] **4.8 Validación de elegibilidad por categoría en backend**
 - [x] **4.9 Categorías por género (M / F / Mixto)**
 - [ ] **4.10 PWA / app instalable**
+- [x] **4.11 Campos de perfil: apodo, lado preferido, teléfono y género obligatorios**
+- [x] **4.12 Tiempo de calentamiento por evento**
+- [ ] **4.13 SMTP personalizado (Resend)** — configurar en Supabase → Authentication → Emails para evitar límite de 4 correos/hora
+- [ ] **4.14 Admin editar todos los campos del jugador** (nombre, teléfono, género, email)
+- [ ] **4.15 Eventos por nivel directo** (sin seleccionar categoría completa)
+- [ ] **4.16 Autorización de género cruzado** (admin autoriza mujer en evento masculino y viceversa)
+- [ ] **4.17 Finalizar evento anticipado / agregar ronda extra** (botones en coordinador)
+- [ ] **4.18 Plantillas de eventos recurrentes**
+- [ ] **4.19 Parejas fijas vs individual en eventos**
 
 ---
 
@@ -129,4 +138,4 @@
 
 ---
 
-**Progreso:** 29 / 39 ítems completos (74.4%)
+**Progreso:** 31 / 48 ítems completos (64.6%)
