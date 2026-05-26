@@ -59,11 +59,11 @@
 - [x] **4.12 Tiempo de calentamiento por evento**
 - [ ] **4.13 SMTP personalizado (Resend)** — configurar en Supabase → Authentication → Emails para evitar límite de 4 correos/hora
 - [ ] **4.14 Admin editar todos los campos del jugador** (nombre, teléfono, género, email)
-- [ ] **4.15 Eventos por nivel directo** (sin seleccionar categoría completa)
-- [ ] **4.16 Autorización de género cruzado** (admin autoriza mujer en evento masculino y viceversa)
-- [ ] **4.17 Finalizar evento anticipado / agregar ronda extra** (botones en coordinador)
-- [ ] **4.18 Plantillas de eventos recurrentes**
-- [ ] **4.19 Parejas fijas vs individual en eventos**
+- [x] **4.15 Eventos por nivel directo** — selector de pills por nivel (ej. B+ y A-), categoría se deriva automáticamente
+- [x] **4.16 Autorización de género cruzado** — tabla `gender_exception_authorizations` + UI en `/admin/autorizaciones`
+- [x] **4.17 Finalizar evento anticipado / agregar ronda extra** — warning de rondas restantes + botón secundario "Agregar ronda extra"
+- [x] **4.18 Plantillas de eventos recurrentes** — guardar/cargar desde CreateEvent; página `/admin/plantillas`
+- [x] **4.19 Parejas fijas vs individual en eventos** — toggle `pair_format` en CreateEvent; inscripción con pareja/TBD; confirmación desde perfil; panel de asignación admin en coordinador; bloqueo de rondas si hay TBD
 
 ---
 
@@ -138,4 +138,4 @@
 
 ---
 
-**Progreso:** 31 / 48 ítems completos (64.6%)
+**Progreso:** 36 / 48 ítems completos (75%)
