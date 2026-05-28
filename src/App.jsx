@@ -22,6 +22,9 @@ import AdminExclusions from "./pages/AdminExclusions";
 import AdminAudit from "./pages/AdminAudit";
 import AdminSettings from "./pages/AdminSettings";
 import AdminTemplates from "./pages/AdminTemplates";
+import UpdatePassword from "./pages/UpdatePassword";
+import Challenges from "./pages/Challenges";
+import AdminChallenges from "./pages/AdminChallenges";
 
 function App() {
   return (
@@ -39,6 +42,16 @@ function App() {
               <Route path="/registro" element={<Register />} />
               <Route path="/historial" element={<EventHistory />} />
               <Route path="/no-autorizado" element={<Unauthorized />} />
+              <Route path="/actualizar-password" element={<UpdatePassword />} />
+
+              <Route
+                path="/retos"
+                element={
+                  <ProtectedRoute>
+                    <Challenges />
+                  </ProtectedRoute>
+                }
+              />
 
               <Route
                 path="/perfil"
@@ -126,6 +139,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                     <AdminTemplates />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/retos"
+                element={
+                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                    <AdminChallenges />
                   </ProtectedRoute>
                 }
               />

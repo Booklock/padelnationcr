@@ -169,7 +169,20 @@
   padding: 16px;
   font-weight: 800;
   transition: 0.2s ease;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quick-action-badge {
+  background: var(--color-lime);
+  color: var(--color-carbon);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  flex-shrink: 0;
 }
 
 .quick-action:hover {

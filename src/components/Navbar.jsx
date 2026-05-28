@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { usePendingChallengeCount } from "../hooks/useChallenges";
 import logoUrl from "../assets/logo.png";
 import "./Navbar.css";
 
@@ -8,6 +9,7 @@ function Navbar() {
   const { user, profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pendingChallenges = usePendingChallengeCount();
 
   function toggleMenu() {
     setIsMenuOpen((current) => !current);
@@ -44,6 +46,15 @@ function Navbar() {
           {user && (
             <Link to="/perfil" onClick={closeMenu}>
               Mi perfil
+            </Link>
+          )}
+
+          {user && (
+            <Link to="/retos" onClick={closeMenu} className="nav-retos-link">
+              Retos
+              {pendingChallenges > 0 && (
+                <span className="nav-challenge-badge">{pendingChallenges}</span>
+              )}
             </Link>
           )}
 

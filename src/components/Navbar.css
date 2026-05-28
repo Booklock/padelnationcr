@@ -52,6 +52,26 @@
   font-size: 0.95rem;
 }
 
+/* ── Badge de retos pendientes ── */
+.nav-retos-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-challenge-badge {
+  background: var(--color-lime);
+  color: var(--color-carbon);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 1px 6px;
+  line-height: 1.4;
+  min-width: 18px;
+  text-align: center;
+}
+
 .mobile-nav-actions {
   display: none;
 }

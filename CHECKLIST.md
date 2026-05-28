@@ -27,7 +27,7 @@
 - [x] **2.6 Puntos por posición configurables**: tabla editable en CreateEvent. Aplicar al cerrar evento
 - [x] **2.7 Retos con apuesta (parejas)**: validación 5-de-diferencia, flujo retar → aceptar/rechazar → admin resuelve → transferir puntos. Notificación in-app a admins. Solo aplica a ranking de parejas
 - [x] **2.8 Ranking de parejas fijas**: pestaña en `/ranking`. Invitación mutua → pareja activa → ranking propio con puntos de eventos + retos
-- [ ] **2.7b Retos individuales**: ⏳ Pendiente alineación con dueño — definir reglas de elegibilidad entre categorías antes de implementar
+- [x] **2.7b Retos individuales**: mismo nivel, apuesta 5-20 pts, 4 jugadores ganan/pierden, 48h para responder, admin aprueba con cancha/fecha, admin cierra con resultado → transfiere puntos
 - [x] **2.9 Cambio de categoría manual por admin**: panel para mover jugadores. Registro en `player_category_history`. Categoría + nivel + teléfono + género en registro
 - [x] **2.10 Autorización a categoría superior**: panel `/admin/autorizaciones` — otorgar (puntual por evento o por fecha de vencimiento), revocar. Backend ya validado en `register_for_event`
 - [x] **2.11 Excluir resultados del ranking**: panel `/admin/exclusiones` — sistema sugiere peores N (≥4 eventos→1, ≥8→2), admin confirma/revoca por jugador
@@ -138,4 +138,4 @@
 
 ---
 
-**Progreso:** 36 / 48 ítems completos (75%)
+**Progreso:** 37 / 48 ítems completos (77%)

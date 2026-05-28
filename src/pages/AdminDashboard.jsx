@@ -5,6 +5,19 @@ import { supabase } from "../lib/supabase";
 import { FORMAT_LABELS, formatEventDate, formatEventTime } from "../utils/formatters";
 import "./AdminDashboard.css";
 
+/** Cuenta retos pendientes de aprobación admin (status = 'accepted'). */
+function usePendingAdminChallenges() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    supabase
+      .from("individual_challenges")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "accepted")
+      .then(({ count: c }) => setCount(c ?? 0));
+  }, []);
+  return count;
+}
+
 /** Stats de operación: players, pending matches, temporada activa. */
 function useAdminStats() {
   const [stats, setStats] = useState({ players: "…", pendingMatches: "…", season: "…" });
@@ -44,6 +57,7 @@ function AdminDashboard() {
     excludeStatuses: ["draft", "cancelled", "finished"],
   });
   const stats = useAdminStats();
+  const pendingChallenges = usePendingAdminChallenges();
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
 
   // Mantener índice dentro de los límites al cargar los eventos
@@ -232,6 +246,12 @@ function AdminDashboard() {
                 </Link>
                 <Link className="quick-action" to="/admin/plantillas">
                   Plantillas de eventos
+                </Link>
+                <Link className="quick-action" to="/admin/retos">
+                  Gestión de retos
+                  {pendingChallenges > 0 && (
+                    <span className="quick-action-badge">{pendingChallenges}</span>
+                  )}
                 </Link>
                 <Link className="quick-action" to="/admin/configuracion">
                   Configuración del sistema
